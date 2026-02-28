@@ -60,6 +60,8 @@ export default function Recs() {
 
   const [recs, setRecs] = useState<Rec[]>([]);
   const [explanations, setExplanations] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
 useEffect(() => {
   if (recs.length === 0) return;
@@ -87,8 +89,7 @@ useEffect(() => {
   }
   fetchExplanations();
 }, [recs]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
 
   useEffect(() => {
     async function load() {
