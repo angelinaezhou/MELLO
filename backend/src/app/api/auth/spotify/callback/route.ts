@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   const returnedState = url.searchParams.get("state");
   const error = url.searchParams.get("error");
 
-  const appUrl = process.env.APP_URL ?? "exp://10.4.151.47:8081";
+  const appUrl = process.env.APP_URL ?? "exp://192.168.0.208:8081";
   const clientId = process.env.SPOTIFY_CLIENT_ID!;
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET!;
   const redirectUri = process.env.SPOTIFY_REDIRECT_URI!;
@@ -75,5 +75,5 @@ export async function GET(req: Request) {
     ...(tokenJson.refresh_token && { refresh_token: tokenJson.refresh_token }),
   });
 
-  return NextResponse.redirect(`https://mello-auth.vercel.app/auth/spotify/success?${params.toString()}`);
+return NextResponse.redirect(`${appUrl}?${params.toString()}`);
 }

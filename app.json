@@ -1,0 +1,8 @@
+{
+  "android": {
+    "package": "com.anonymous.mello"
+  },
+  "ios": {
+    "bundleIdentifier": "com.anonymous.mello"
+  }
+}
