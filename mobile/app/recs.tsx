@@ -44,15 +44,7 @@ function FeatureBars({ features }: { features: AudioFeatures }) {
   );
 }
 
-function explainSimilarity(seed: AudioFeatures, rec: AudioFeatures): string {
-  const reasons: string[] = [];
-  if (Math.abs(seed.energy - rec.energy) < 0.15) reasons.push("similar energy");
-  if (Math.abs(seed.valence - rec.valence) < 0.15) reasons.push("same mood");
-  if (Math.abs(seed.danceability - rec.danceability) < 0.15) reasons.push("equally danceable");
-  if (Math.abs(seed.acousticness - rec.acousticness) < 0.15) reasons.push("same acoustic feel");
-  if (reasons.length === 0) reasons.push("similar sonic profile");
-  return `Matched on ${reasons.join(", ")}.`;
-}
+
 
 export default function Recs() {
   const router = useRouter();
@@ -67,6 +59,34 @@ export default function Recs() {
     : { energy: 0.5, valence: 0.5, danceability: 0.5, acousticness: 0.5, instrumentalness: 0.5, tempo: 120 };
 
   const [recs, setRecs] = useState<Rec[]>([]);
+  const [explanations, setExplanations] = useState<Record<string, string>>({});
+
+useEffect(() => {
+  if (recs.length === 0) return;
+  async function fetchExplanations() {
+    const results: Record<string, string> = {};
+    await Promise.all(
+      recs.map(async (rec) => {
+        try {
+          const res = await fetch(`${BASE_URL}/api/openai/explain`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              seed: { name: params.songName, artist: params.artist },
+              rec: { name: rec.track.name, artist: rec.track.artist },
+            }),
+          });
+          const data = await res.json();
+          results[rec.track.id] = data.explanation;
+        } catch {
+          results[rec.track.id] = "Similar sonic profile.";
+        }
+      })
+    );
+    setExplanations(results);
+  }
+  fetchExplanations();
+}, [recs]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -123,7 +143,7 @@ export default function Recs() {
             <Text style={styles.recName} numberOfLines={1}>{rec.track.name}</Text>
             <Text style={styles.recArtist} numberOfLines={1}>{rec.track.artist}</Text>
             <Text style={styles.recWhy}>
-              {rec.features ? explainSimilarity(audioFeatures, rec.features) : "Similar vibe."}
+              {explanations[rec.track.id] ?? "Loading..."}
             </Text>
           </View>
           <View style={styles.matchBadge}>
