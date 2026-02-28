@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   const returnedState = url.searchParams.get("state");
   const error = url.searchParams.get("error");
 
-  const appUrl = process.env.APP_URL ?? "exp://192.168.0.208:8081";
+  const appUrl = process.env.APP_URL ?? "exp://10.4.151.47:8081";
   const clientId = process.env.SPOTIFY_CLIENT_ID!;
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET!;
   const redirectUri = process.env.SPOTIFY_REDIRECT_URI!;
