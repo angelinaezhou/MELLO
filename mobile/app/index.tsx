@@ -4,7 +4,7 @@ import * as WebBrowser from "expo-web-browser";
 import * as SecureStore from "expo-secure-store";
 import * as Linking from "expo-linking";
 import { useState, useEffect } from "react";
-import { useUser } from "./userContext";
+import { useUser } from "../context/userContext";
 
 const BASE_URL = "https://mello-auth.vercel.app";
 const APP_URL = "exp://10.4.151.47:8081";
