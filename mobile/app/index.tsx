@@ -4,6 +4,7 @@ import * as WebBrowser from "expo-web-browser";
 import * as SecureStore from "expo-secure-store";
 import * as Linking from "expo-linking";
 import { useState } from "react";
+import { useSpotifyAuth } from "../hooks/useSpotifyAuth";
 import { FontAwesome } from "@expo/vector-icons";
 
 const BASE_URL = "https://your-app.vercel.app";
@@ -11,6 +12,7 @@ const APP_URL = "exp://10.4.151.47:8081";
 
 export default function Home() {
   const [connected, setConnected] = useState(false);
+  const { getValidToken } = useSpotifyAuth(); 
 
   const handleLogin = async () => {
     const result = await WebBrowser.openAuthSessionAsync(
@@ -24,6 +26,7 @@ export default function Home() {
         await SecureStore.setItemAsync("access_token", queryParams.access_token as string);
         await SecureStore.setItemAsync("refresh_token", queryParams.refresh_token as string ?? "");
         await SecureStore.setItemAsync("expires_in", queryParams.expires_in as string);
+        await SecureStore.setItemAsync("stored_at", String(Date.now()));
         setConnected(true);
       }
     }
