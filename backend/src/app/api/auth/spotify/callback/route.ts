@@ -1,4 +1,4 @@
-// Receives code, exchanges for tokens, stores cookies, redirects to UI
+// callback route.ts, Receives code, exchanges for tokens, stores cookies, redirects to UI
 
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
@@ -75,5 +75,5 @@ export async function GET(req: Request) {
     ...(tokenJson.refresh_token && { refresh_token: tokenJson.refresh_token }),
   });
 
-  return NextResponse.redirect(`${appUrl}?${params.toString()}`);
+  return NextResponse.redirect(`https://mello-auth.vercel.app/auth/spotify/success?${params.toString()}`);
 }

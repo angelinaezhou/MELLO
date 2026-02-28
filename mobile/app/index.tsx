@@ -1,18 +1,29 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Image } from "react-native";
+import { FontAwesome } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import * as SecureStore from "expo-secure-store";
 import * as Linking from "expo-linking";
-import { useState } from "react";
-import { useSpotifyAuth } from "../hooks/useSpotifyAuth";
-import { FontAwesome } from "@expo/vector-icons";
+import { useState, useEffect } from "react";
+import { useUser } from "./userContext";
 
-const BASE_URL = "https://your-app.vercel.app";
+WebBrowser.maybeCompleteAuthSession();
+
+const BASE_URL = "https://mello-auth.vercel.app";
 const APP_URL = "exp://10.4.151.47:8081";
 
 export default function Home() {
-  const [connected, setConnected] = useState(false);
-  const { getValidToken } = useSpotifyAuth(); 
+  const { userName, userImage, connected, setConnected, logout } = useUser();
+  const fadeAnim = useState(new Animated.Value(0))[0];
+
+  useEffect(() => {
+    if (userName) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [userName]);
 
   const handleLogin = async () => {
     const result = await WebBrowser.openAuthSessionAsync(
@@ -23,7 +34,8 @@ export default function Home() {
     if (result.type === "success") {
       const { queryParams } = Linking.parse(result.url);
       if (queryParams?.auth === "success") {
-        await SecureStore.setItemAsync("access_token", queryParams.access_token as string);
+        const token = queryParams.access_token as string;
+        await SecureStore.setItemAsync("access_token", token);
         await SecureStore.setItemAsync("refresh_token", queryParams.refresh_token as string ?? "");
         await SecureStore.setItemAsync("expires_in", queryParams.expires_in as string);
         await SecureStore.setItemAsync("stored_at", String(Date.now()));
@@ -32,24 +44,43 @@ export default function Home() {
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.hero}>
-        <Text style={styles.title}>mello</Text>
-        <Text style={styles.subtitle}>rank and share your music taste</Text>
-      </View>
-
-      {connected ? (
-        <View style={styles.connectedBadge}>
-          <Ionicons name="checkmark-circle" size={18} color="#1db954" />
-          <Text style={styles.connectedText}>Spotify connected</Text>
+  if (connected) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            {userImage ? (
+              <Image source={{ uri: userImage }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatarPlaceholder} />
+            )}
+            <View>
+              <Text style={styles.headerTitle}>mello</Text>
+              <Animated.Text style={[styles.headerSubtitle, { opacity: fadeAnim }]}>
+                listening as {userName ?? "..."}
+              </Animated.Text>
+            </View>
+          </View>
+          <TouchableOpacity onPress={logout}>
+            <Text style={styles.logoutText}>Log out</Text>
+          </TouchableOpacity>
         </View>
-      ) : (
-        <TouchableOpacity style={styles.spotifyButton} onPress={handleLogin}>
-          <FontAwesome name="spotify" size={20} color="#fff" />
-          <Text style={styles.spotifyButtonText}>Connect Spotify</Text>
-        </TouchableOpacity>
-      )}
+
+        <View style={styles.content}>
+          <Text style={{ color: "#aaa" }}>your music, ranked.</Text>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.hero}>
+      <Text style={styles.title}>mello</Text>
+      <Text style={styles.subtitle}>rank and share your music taste</Text>
+      <TouchableOpacity style={styles.spotifyButton} onPress={handleLogin}>
+        <FontAwesome name="spotify" size={20} color="#fff" />
+        <Text style={styles.spotifyButtonText}>Connect Spotify</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -57,15 +88,66 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#fff",
+  },
+  header: {
+    paddingTop: 60,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    backgroundColor: "#fff",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  avatarPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#eee",
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#1a1a1a",
+    letterSpacing: -0.5,
+  },
+  headerSubtitle: {
+    fontSize: 13,
+    color: "#888",
+    marginTop: 1,
+  },
+  logoutText: {
+    color: "#aaa",
+    fontSize: 13,
+  },
+  content: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  hero: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#fff",
-    gap: 24,
+    gap: 16,
     paddingHorizontal: 32,
-  },
-  hero: {
-    alignItems: "center",
-    gap: 8,
   },
   title: {
     fontSize: 48,
@@ -85,24 +167,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     borderRadius: 30,
     gap: 10,
+    marginTop: 8,
   },
   spotifyButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
-  },
-  connectedBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "#f0fdf4",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-  },
-  connectedText: {
-    color: "#1db954",
-    fontWeight: "600",
-    fontSize: 15,
   },
 });
