@@ -4,7 +4,7 @@ import { Link } from "expo-router";
 export default function Home() {
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
-      <Text style={{ fontSize: 24, fontWeight: "600" }}>Melo</Text>
+      <Text style={{ fontSize: 24, fontWeight: "600" }}>mello</Text>
 
       <Link href="/rankings" asChild>
         <Button title="My Rankings" />
@@ -15,7 +15,7 @@ export default function Home() {
       </Link>
 
       <Link href="/recs" asChild>
-        <Button title="Recommendations" />
+        <Button title="Recs" />
       </Link>
     </View>
   );
