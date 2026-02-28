@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 
 export default function Layout() {
   return (
-    <Stack>
+    <Stack screenOptions={{ headerShown: true }}>
       <Stack.Screen name="index" options={{ title: "Home" }} />
       <Stack.Screen name="rankings" options={{ title: "My Rankings" }} />
       <Stack.Screen name="queue" options={{ title: "To Rank" }} />
