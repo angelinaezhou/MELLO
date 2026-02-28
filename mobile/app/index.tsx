@@ -8,7 +8,7 @@ import { useSpotifyAuth } from "../hooks/useSpotifyAuth";
 import { FontAwesome } from "@expo/vector-icons";
 
 const BASE_URL = "https://mello-auth.vercel.app";
-const APP_URL = "exp://10.4.151.47:8081";
+const APP_URL = "exp://192.168.0.208:8081";
 
 export default function Home() {
   const [connected, setConnected] = useState(false);

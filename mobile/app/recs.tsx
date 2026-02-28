@@ -4,7 +4,6 @@ import {
   StyleSheet, ActivityIndicator, TouchableOpacity
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 import { useSpotifyAuth } from "../hooks/useSpotifyAuth";
 
 const BASE_URL = "https://mello-auth.vercel.app";
@@ -22,10 +21,10 @@ type Rec = {
 
 function FeatureBars({ features }: { features: AudioFeatures }) {
   const bars = [
-    { label: "Energy",       value: features.energy,       color: "#FF6B6B" },
-    { label: "Mood",         value: features.valence,      color: "#1DB954" },
-    { label: "Danceability", value: features.danceability, color: "#4ECDC4" },
-    { label: "Acoustic",     value: features.acousticness, color: "#FFD93D" },
+    { label: "Energy",       value: features.energy,       color: "#ff6b6b" },
+    { label: "Mood",         value: features.valence,      color: "#1db954" },
+    { label: "Danceability", value: features.danceability, color: "#4ecdc4" },
+    { label: "Acoustic",     value: features.acousticness, color: "#ffd93d" },
   ];
   return (
     <View style={styles.featureBars}>
@@ -35,7 +34,7 @@ function FeatureBars({ features }: { features: AudioFeatures }) {
           <View style={styles.barTrack}>
             <View style={[styles.barFill, {
               width: `${Math.round(bar.value * 100)}%` as any,
-              backgroundColor: bar.color
+              backgroundColor: bar.color,
             }]} />
           </View>
           <Text style={styles.barValue}>{Math.round(bar.value * 100)}</Text>
@@ -76,7 +75,6 @@ export default function Recs() {
       try {
         const token = await getValidToken();
         if (!token) { setError("Not logged in"); setLoading(false); return; }
-
         const res = await fetch(
           `${BASE_URL}/api/spotify/recommend?songId=${params.songId}`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -115,7 +113,7 @@ export default function Recs() {
 
       <Text style={styles.sectionHeader}>Because you love this...</Text>
 
-      {loading && <ActivityIndicator size="large" color="#1DB954" style={{ marginTop: 32 }} />}
+      {loading && <ActivityIndicator size="large" color="#1db954" style={{ marginTop: 32 }} />}
       {error && <Text style={styles.errorText}>{error}</Text>}
 
       {!loading && recs.map((rec) => (
@@ -139,32 +137,42 @@ export default function Recs() {
 }
 
 const styles = StyleSheet.create({
-  container:   { flex: 1, backgroundColor: "#191414" },
-  content:     { padding: 20, paddingBottom: 60 },
-  backButton:  { marginBottom: 16 },
-  backText:    { color: "#1DB954", fontSize: 16, fontWeight: "600" },
-  seedCard:    { flexDirection: "row", alignItems: "center", backgroundColor: "#282828", borderRadius: 12, padding: 16, marginBottom: 24 },
-  albumArt:    { width: 72, height: 72, borderRadius: 8 },
-  seedInfo:    { flex: 1, marginLeft: 14 },
-  seedName:    { color: "#FFFFFF", fontSize: 18, fontWeight: "700" },
-  seedArtist:  { color: "#B3B3B3", fontSize: 14, marginTop: 2 },
-  rankBadge:   { alignSelf: "flex-start", backgroundColor: "#1DB954", borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, marginTop: 8 },
-  rankText:    { color: "#191414", fontSize: 12, fontWeight: "700" },
-  sectionHeader: { color: "#FFFFFF", fontSize: 16, fontWeight: "700", marginBottom: 12, marginTop: 8 },
-  featureBars: { backgroundColor: "#282828", borderRadius: 12, padding: 16, marginBottom: 24 },
-  barRow:      { flexDirection: "row", alignItems: "center", marginBottom: 10 },
-  barLabel:    { color: "#B3B3B3", fontSize: 12, width: 90 },
-  barTrack:    { flex: 1, height: 6, backgroundColor: "#404040", borderRadius: 3, overflow: "hidden" },
-  barFill:     { height: "100%", borderRadius: 3 },
-  barValue:    { color: "#B3B3B3", fontSize: 12, width: 30, textAlign: "right" },
-  recCard:     { flexDirection: "row", alignItems: "center", backgroundColor: "#282828", borderRadius: 12, padding: 14, marginBottom: 12 },
-  recArt:      { width: 56, height: 56, borderRadius: 6 },
-  recInfo:     { flex: 1, marginLeft: 12 },
-  recName:     { color: "#FFFFFF", fontSize: 15, fontWeight: "600" },
-  recArtist:   { color: "#B3B3B3", fontSize: 13, marginTop: 2 },
-  recWhy:      { color: "#888", fontSize: 12, marginTop: 6, lineHeight: 17 },
-  matchBadge:  { alignItems: "center", marginLeft: 10 },
-  matchPct:    { color: "#1DB954", fontSize: 16, fontWeight: "700" },
-  matchLabel:  { color: "#B3B3B3", fontSize: 10 },
-  errorText:   { color: "#FF6B6B", textAlign: "center", marginTop: 20 },
+  container:     { flex: 1, backgroundColor: "#fff" },
+  content:       { padding: 20, paddingBottom: 60 },
+  backButton:    { marginBottom: 16, marginTop: 20 },
+  backText:      { color: "#1db954", fontSize: 16, fontWeight: "600" },
+  seedCard: {
+    flexDirection: "row", alignItems: "center", backgroundColor: "#fff",
+    borderRadius: 20, padding: 16, marginBottom: 24,
+    shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 16, shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  albumArt:      { width: 72, height: 72, borderRadius: 12 },
+  seedInfo:      { flex: 1, marginLeft: 14 },
+  seedName:      { color: "#1a1a1a", fontSize: 18, fontWeight: "700" },
+  seedArtist:    { color: "#aaa", fontSize: 14, marginTop: 2 },
+  rankBadge:     { alignSelf: "flex-start", backgroundColor: "#1db954", borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, marginTop: 8 },
+  rankText:      { color: "#fff", fontSize: 12, fontWeight: "700" },
+  sectionHeader: { color: "#1a1a1a", fontSize: 16, fontWeight: "700", marginBottom: 12, marginTop: 8 },
+  featureBars:   { backgroundColor: "#f9f9f9", borderRadius: 16, padding: 16, marginBottom: 24 },
+  barRow:        { flexDirection: "row", alignItems: "center", marginBottom: 10 },
+  barLabel:      { color: "#aaa", fontSize: 12, width: 90 },
+  barTrack:      { flex: 1, height: 6, backgroundColor: "#eee", borderRadius: 3, overflow: "hidden" },
+  barFill:       { height: "100%", borderRadius: 3 },
+  barValue:      { color: "#aaa", fontSize: 12, width: 30, textAlign: "right" },
+  recCard: {
+    flexDirection: "row", alignItems: "center", backgroundColor: "#fff",
+    borderRadius: 16, padding: 14, marginBottom: 12,
+    shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  recArt:        { width: 56, height: 56, borderRadius: 8 },
+  recInfo:       { flex: 1, marginLeft: 12 },
+  recName:       { color: "#1a1a1a", fontSize: 15, fontWeight: "600" },
+  recArtist:     { color: "#aaa", fontSize: 13, marginTop: 2 },
+  recWhy:        { color: "#bbb", fontSize: 12, marginTop: 6, lineHeight: 17 },
+  matchBadge:    { alignItems: "center", marginLeft: 10 },
+  matchPct:      { color: "#1db954", fontSize: 16, fontWeight: "700" },
+  matchLabel:    { color: "#aaa", fontSize: 10 },
+  errorText:     { color: "#ff4444", textAlign: "center", marginTop: 20 },
 });

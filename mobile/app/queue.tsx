@@ -107,7 +107,7 @@ export default function Queue() {
 
   if (loading) return (
     <View style={styles.center}>
-      <ActivityIndicator size="large" color="#1DB954" />
+      <ActivityIndicator size="large" color="#1db954" />
       <Text style={styles.dimText}>Loading your tracks...</Text>
     </View>
   );
@@ -158,19 +158,24 @@ export default function Queue() {
 }
 
 const styles = StyleSheet.create({
-  container:     { flex: 1, backgroundColor: "#191414", alignItems: "center", paddingTop: 60, paddingHorizontal: 16 },
-  center:        { flex: 1, backgroundColor: "#191414", alignItems: "center", justifyContent: "center", gap: 12 },
-  header:        { color: "#FFFFFF", fontSize: 22, fontWeight: "700", marginBottom: 20 },
-  progressTrack: { width: "100%", height: 4, backgroundColor: "#333", borderRadius: 2, marginBottom: 8 },
-  progressFill:  { height: "100%", backgroundColor: "#1DB954", borderRadius: 2 },
-  dimText:       { color: "#888", fontSize: 13, marginBottom: 32 },
+  container:     { flex: 1, backgroundColor: "#fff", alignItems: "center", paddingTop: 60, paddingHorizontal: 16 },
+  center:        { flex: 1, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", gap: 12 },
+  header:        { color: "#1a1a1a", fontSize: 22, fontWeight: "700", marginBottom: 20, letterSpacing: -0.5 },
+  progressTrack: { width: "100%", height: 4, backgroundColor: "#f0f0f0", borderRadius: 2, marginBottom: 8 },
+  progressFill:  { height: "100%", backgroundColor: "#1db954", borderRadius: 2 },
+  dimText:       { color: "#aaa", fontSize: 13, marginBottom: 32 },
   cards:         { flexDirection: "row", alignItems: "center", gap: 10, width: "100%" },
-  card:          { flex: 1, backgroundColor: "#282828", borderRadius: 16, padding: 14, alignItems: "center" },
-  albumArt:      { width: "100%", aspectRatio: 1, borderRadius: 10, marginBottom: 10 },
-  songName:      { color: "#FFFFFF", fontSize: 14, fontWeight: "600", textAlign: "center", marginBottom: 4 },
-  artistName:    { color: "#B3B3B3", fontSize: 12, textAlign: "center" },
-  vs:            { color: "#1DB954", fontSize: 18, fontWeight: "800" },
+  card: {
+    flex: 1, backgroundColor: "#fff", borderRadius: 20, padding: 14,
+    alignItems: "center",
+    shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 16, shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  albumArt:      { width: "100%", aspectRatio: 1, borderRadius: 14, marginBottom: 10 },
+  songName:      { color: "#1a1a1a", fontSize: 14, fontWeight: "600", textAlign: "center", marginBottom: 4 },
+  artistName:    { color: "#aaa", fontSize: 12, textAlign: "center" },
+  vs:            { color: "#1db954", fontSize: 18, fontWeight: "800" },
   skipButton:    { marginTop: 28 },
-  skipText:      { color: "#555", fontSize: 14 },
-  errorText:     { color: "#FF6B6B", textAlign: "center", paddingHorizontal: 32 },
+  skipText:      { color: "#ccc", fontSize: 14 },
+  errorText:     { color: "#ff4444", textAlign: "center", paddingHorizontal: 32 },
 });

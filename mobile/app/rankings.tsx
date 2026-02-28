@@ -23,16 +23,18 @@ export default function Rankings() {
 
   if (!ranked.length) return (
     <View style={styles.empty}>
-      <Text style={styles.emptyText}>No rankings yet — head to "To Rank" first</Text>
+      <Text style={styles.emptyTitle}>No rankings yet</Text>
+      <Text style={styles.emptySubtitle}>Head to "To Rank" to start ranking your songs</Text>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Your Rankings</Text>
+      <Text style={styles.header}>My Rankings</Text>
       <FlatList
         data={ranked}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingBottom: 40 }}
         renderItem={({ item, index }) => (
           <TouchableOpacity
             style={styles.row}
@@ -50,7 +52,12 @@ export default function Rankings() {
             })}
             activeOpacity={0.7}
           >
-            <Text style={styles.rank}>#{index + 1}</Text>
+            <Text style={[
+              styles.rank,
+              index === 0 && { color: "#FFB800" },
+              index === 1 && { color: "#aaa" },
+              index === 2 && { color: "#cd7f32" },
+            ]}>#{index + 1}</Text>
             <Image source={{ uri: item.albumArt }} style={styles.albumArt} />
             <View style={styles.info}>
               <Text style={styles.songName} numberOfLines={1}>{item.name}</Text>
@@ -67,16 +74,17 @@ export default function Rankings() {
 }
 
 const styles = StyleSheet.create({
-  container:  { flex: 1, backgroundColor: "#191414", paddingTop: 60 },
-  empty:      { flex: 1, backgroundColor: "#191414", alignItems: "center", justifyContent: "center" },
-  emptyText:  { color: "#888", textAlign: "center", paddingHorizontal: 32 },
-  header:     { color: "#FFFFFF", fontSize: 24, fontWeight: "700", paddingHorizontal: 20, marginBottom: 16 },
-  row:        { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#222" },
-  rank:       { color: "#1DB954", fontSize: 16, fontWeight: "700", width: 36 },
-  albumArt:   { width: 48, height: 48, borderRadius: 6 },
-  info:       { flex: 1, marginLeft: 12 },
-  songName:   { color: "#FFFFFF", fontSize: 15, fontWeight: "600" },
-  artistName: { color: "#B3B3B3", fontSize: 13, marginTop: 2 },
-  scoreBadge: { backgroundColor: "#282828", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
-  scoreText:  { color: "#1DB954", fontSize: 13, fontWeight: "700" },
+  container:    { flex: 1, backgroundColor: "#fff", paddingTop: 60 },
+  empty:        { flex: 1, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", gap: 8, paddingHorizontal: 40 },
+  emptyTitle:   { color: "#1a1a1a", fontSize: 18, fontWeight: "700" },
+  emptySubtitle:{ color: "#aaa", fontSize: 14, textAlign: "center" },
+  header:       { color: "#1a1a1a", fontSize: 28, fontWeight: "700", paddingHorizontal: 20, marginBottom: 16, letterSpacing: -0.5 },
+  row:          { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#f5f5f5" },
+  rank:         { color: "#1db954", fontSize: 15, fontWeight: "700", width: 36 },
+  albumArt:     { width: 52, height: 52, borderRadius: 8 },
+  info:         { flex: 1, marginLeft: 12 },
+  songName:     { color: "#1a1a1a", fontSize: 15, fontWeight: "600" },
+  artistName:   { color: "#aaa", fontSize: 13, marginTop: 2 },
+  scoreBadge:   { backgroundColor: "#f5f5f5", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
+  scoreText:    { color: "#1db954", fontSize: 13, fontWeight: "700" },
 });
