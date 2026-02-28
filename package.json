@@ -1,0 +1,10 @@
+{
+  "name": "MELLO",
+  "version": "1.0.0",
+  "description": "beli for spotify",
+  "scripts": {
+    "dev:mobile": "cd mobile && npx expo start",
+    "dev:backend": "cd backend && npm run dev"
+  },
+  "private": "true"
+}
