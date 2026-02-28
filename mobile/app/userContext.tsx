@@ -56,5 +56,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     </UserContext.Provider>
   );
 }
-
+export default function UserContextProvider({ children }: { children: ReactNode }) {
+  return <UserContext.Provider value={undefined}>{children}</UserContext.Provider>;
+}
 export const useUser = () => useContext(UserContext);
