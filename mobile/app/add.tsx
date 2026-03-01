@@ -141,6 +141,7 @@ export default function Add() {
 
     const existing = await getRankedSongs();
     const needed = matchupsNeeded(existing.length);
+    const totalNeeded = Math.min(needed, existing.length);
 
     if (needed === 0) {
       await addRankedSong(newSong);
@@ -294,6 +295,7 @@ export default function Add() {
 
   const visibleTop50 = top50.filter((s) => !addedIds.has(s.id) && !bookmarkedIds.has(s.id));
   const visibleBookmarks = bookmarks.filter((s) => !addedIds.has(s.id));
+  const noMoreOpponents = headToHead ? getNextOpponent(headToHead) === null : false;
 
   // Head-to-head screen
   if (headToHead && h2hLeft && h2hRight) {
@@ -337,12 +339,15 @@ export default function Add() {
         </View>
         <TouchableOpacity
           onPress={handleH2HSkip}
-          disabled={isFinalizing}
+          disabled={isFinalizing || noMoreOpponents}
           style={styles.skipButton}
           activeOpacity={0.8}
         >
-          <Text style={styles.skipText}>Skip this pair</Text>
+          <Text style={[styles.skipText, noMoreOpponents && { opacity: 0.4 }]}>Skip this pair</Text>
         </TouchableOpacity>
+        {noMoreOpponents && (
+          <Text style={styles.skipHint}>No more songs to swap in - choose one to continue.</Text>
+        )}
         <Modal transparent visible={isFinalizing} animationType="fade">
           <View style={styles.blockingOverlay}>
             <View style={styles.blockingCard}>
@@ -489,10 +494,10 @@ const styles = StyleSheet.create({
   progressFill:     { height: "100%", backgroundColor: "#1db954", borderRadius: 2 },
   dimText:          { color: "#aaa", fontSize: 13, marginBottom: 32 },
   cards:            { flexDirection: "row", alignItems: "center", gap: 10, width: "100%" },
-  card:             { flex: 1, backgroundColor: "#fff", borderRadius: 20, padding: 14, alignItems: "center", shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 16, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
+  card:             { flex: 1, backgroundColor: "#fff", borderRadius: 20, paddingVertical: 24, paddingHorizontal: 12, alignItems: "center", shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 16, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
   cardArt:          { width: "100%", aspectRatio: 1, borderRadius: 14, marginBottom: 10 },
-  cardSong:         { color: "#1a1a1a", fontSize: 14, fontWeight: "600", textAlign: "center", marginBottom: 4 },
-  cardArtist:       { color: "#aaa", fontSize: 12, textAlign: "center" },
+  cardSong:         { color: "#1a1a1a", fontSize: 15, fontWeight: "500", textAlign: "center", marginBottom: 4, fontFamily: "Anton" },
+  cardArtist:       { color: "#aaa", fontSize: 12, textAlign: "center", fontFamily: "Anton" },
   vs:               { color: "#1db954", fontSize: 18, fontWeight: "800" },
   blockingOverlay: {
     flex: 1,
@@ -515,11 +520,14 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   blockingTitle: {
+    marginTop: 4,
     fontSize: 16,
     fontWeight: "700",
     color: "#1a1a1a",
   },
   blockingSubtitle: {
+    paddingVertical: 4,
+    marginBottom: 2,
     fontSize: 13,
     color: "#888",
   },
@@ -535,4 +543,10 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 13,
   },
+  skipHint: {
+    marginTop: 16,
+    color: "#888",
+    fontWeight: "700",
+    fontSize: 13,
+  }
 });
