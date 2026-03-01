@@ -115,7 +115,7 @@ export default function ShareCard() {
 
       {/* Share button */}
       <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
-        <Text style={styles.shareButtonText}>Share My Taste 🎵</Text>
+        <Text style={styles.shareButtonText}>Share My Taste</Text>
       </TouchableOpacity>
 
       <Text style={styles.hint}>Share your taste code so friends can blend music with you</Text>
@@ -138,30 +138,30 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: 20,
     backgroundColor: "#0a0a0a",
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: 20,          // was 24
+    padding: 16,               // was 24
     shadowColor: "#000",
     shadowOpacity: 0.3,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 8 },
     elevation: 10,
   },
-  cardHeader:        { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 },
-  cardBrand:         { fontSize: 28, fontWeight: "800", color: "#1db954", letterSpacing: -1 },
-  cardUsername:      { fontSize: 14, color: "#666", marginTop: 2 },
+  cardHeader:        { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 },  // was 20
+  cardBrand:         { fontSize: 22, fontWeight: "800", color: "#1db954", letterSpacing: -1 },  // was 28
+  cardUsername:      { fontSize: 12, color: "#666", marginTop: 2 },
   cardCodeBox:       { alignItems: "flex-end" },
   cardCodeLabel:     { fontSize: 10, color: "#444", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 },
-  cardCode:          { fontSize: 18, fontWeight: "800", color: "#1db954", letterSpacing: 3 },
-  divider:           { height: 1, backgroundColor: "#1a1a1a", marginBottom: 16 },
-  cardSectionLabel:  { fontSize: 10, color: "#444", fontWeight: "700", letterSpacing: 1, marginBottom: 12 },
-  cardRow:           { flexDirection: "row", alignItems: "center", marginBottom: 12, gap: 10 },
-  cardRank:          { fontSize: 12, fontWeight: "700", color: "#1db954", width: 20 },
-  cardAlbumArt:      { width: 36, height: 36, borderRadius: 6 },
+  cardCode:          { fontSize: 15, fontWeight: "800", color: "#1db954", letterSpacing: 3 },  // was 18
+  divider:           { height: 1, backgroundColor: "#1a1a1a", marginBottom: 10 },  // was 16
+  cardSectionLabel:  { fontSize: 10, color: "#444", fontWeight: "700", letterSpacing: 1, marginBottom: 8 },  // was 12
+  cardRow:           { flexDirection: "row", alignItems: "center", marginBottom: 8, gap: 8 },  // was mb:12 gap:10
+  cardRank:          { fontSize: 11, fontWeight: "700", color: "#1db954", width: 16 },
+  cardAlbumArt:      { width: 28, height: 28, borderRadius: 5 },  // was 36x36
   cardSongInfo:      { flex: 1 },
-  cardSongName:      { fontSize: 13, fontWeight: "600", color: "#fff" },
-  cardArtistName:    { fontSize: 11, color: "#666", marginTop: 1 },
-  vibeDot:           { width: 8, height: 8, borderRadius: 4 },
-  cardFooter:        { marginTop: 20, paddingTop: 16, borderTopWidth: 1, borderTopColor: "#1a1a1a", alignItems: "center" },
+  cardSongName:      { fontSize: 12, fontWeight: "600", color: "#fff" },
+  cardArtistName:    { fontSize: 10, color: "#666", marginTop: 1 },
+  vibeDot:           { width: 6, height: 6, borderRadius: 3 },
+  cardFooter:        { marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: "#1a1a1a", alignItems: "center" },  // was mt:20 pt:16
   cardFooterText:    { fontSize: 11, color: "#333", letterSpacing: 0.5 },
   shareButton:       { margin: 20, backgroundColor: "#1db954", borderRadius: 16, paddingVertical: 16, alignItems: "center" },
   shareButtonText:   { color: "#fff", fontSize: 16, fontWeight: "700" },
