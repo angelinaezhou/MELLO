@@ -32,7 +32,8 @@ Recommend 10 songs they would love that are NOT in this list. For each song:
 Return ONLY valid JSON array:
 [{"name": "Song Name", "artist": "Artist Name", "explanation": "one sentence why", "match": 92}, ...]`;
   }
-
+  console.log("OPENAI KEY EXISTS:", !!process.env.OPENAI_API_KEY);
+  console.log("OPENAI KEY PREFIX:", process.env.OPENAI_API_KEY?.slice(0, 7));
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -47,8 +48,12 @@ Return ONLY valid JSON array:
     }),
   });
 
-  if (!res.ok) return NextResponse.json({ error: "OpenAI failed" }, { status: 500 });
-
+ if (!res.ok) {
+  const errText = await res.text();
+  console.log("OPENAI ERROR:", res.status, errText);
+  return NextResponse.json({ error: "OpenAI failed", status: res.status, detail: errText }, { status: 500 });
+ }
+ 
   const data = await res.json();
   const text = data.choices[0].message.content.trim()
     .replace(/```json|```/g, "").trim();
