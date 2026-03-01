@@ -7,6 +7,8 @@ import {
   import { useState, useEffect } from "react";
   import * as SecureStore from "expo-secure-store";
   import type { QueuedSong } from "../utils/storage";
+  import { Ionicons } from "@expo/vector-icons"
+
   
   type Vibe = "loved" | "okay" | "dislike";
   
@@ -17,10 +19,10 @@ import {
     onConfirm: (song: QueuedSong, vibe: Vibe, review: string) => void;
   };
   
-  const VIBE_OPTIONS: { value: Vibe; label: string; emoji: string; color: string; activeColor: string }[] = [
-    { value: "loved",   label: "Loved it",  emoji: "🤩", color: "#f0fdf4", activeColor: "#b7f5c4" },
-    { value: "okay",    label: "It's okay", emoji: "😐", color: "#fefce8", activeColor: "#fef08a" },
-    { value: "dislike", label: "Not for me",emoji: "😕", color: "#fff1f2", activeColor: "#fecaca" },
+  const VIBE_OPTIONS = [
+    { value: "loved",   label: "i loved it!", icon: "heart",        color: "rgba(134,191,142,0.15)", iconColor: "#86BF8E" },
+    { value: "okay",    label: "it was okay.",    icon: "remove-circle", color: "rgba(217,195,106,0.15)", iconColor: "#D9C36A" },
+    { value: "dislike", label: "not for me.",     icon: "close-circle",  color: "rgba(208,145,117,0.15)", iconColor: "#D09175" },
   ];
   
   export default function ReviewModal({ song, visible, onClose, onConfirm }: Props) {
@@ -100,32 +102,30 @@ import {
             </View>
   
             {/* Vibe selector */}
-            <Text style={styles.sectionLabel}>Thoughts?</Text>
+            <Text style={styles.sectionLabel1}>Thoughts?</Text>
             <View style={styles.vibeRow}>
-              {VIBE_OPTIONS.map((option) => {
-                const selected = vibe === option.value;
-                return (
-                  <TouchableOpacity
-                    key={option.value}
+            {VIBE_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                    key={opt.value}
+                    onPress={() => setVibe(opt.value as Vibe)}
                     style={[
-                      styles.vibeButton,
-                      { backgroundColor: selected ? option.activeColor : option.color },
-                      selected && styles.vibeButtonSelected,
+                    styles.vibeOption,
+                    vibe === opt.value && { backgroundColor: opt.color, borderColor: opt.iconColor }
                     ]}
-                    onPress={() => setVibe(option.value)}
                     activeOpacity={0.8}
-                  >
-                    <Text style={styles.vibeEmoji}>{option.emoji}</Text>
-                    <Text style={[styles.vibeLabel, selected && { color: "#1a1a1a" }]}>
-                      {option.label}
+                >
+                    <View style={[styles.vibeIconBox, { backgroundColor: opt.color }]}>
+                    <Ionicons name={opt.icon as any} size={18} color={opt.iconColor} />
+                    </View>
+                    <Text style={[styles.vibeLabel, vibe === opt.value && { color: opt.iconColor, fontWeight: "700" }]}>
+                    {opt.label}
                     </Text>
-                  </TouchableOpacity>
-                );
-              })}
+                </TouchableOpacity>
+                ))}
             </View>
   
             {/* Review text */}
-            <Text style={styles.sectionLabel}>Tell us more! This can affect your song score too.</Text>
+            <Text style={styles.sectionLabel2}>Tell us more! This can affect your song score too.</Text>
             <TextInput
               style={styles.textInput}
               placeholder="..."
@@ -133,9 +133,9 @@ import {
               value={review}
               onChangeText={setReview}
               multiline
-              maxLength={280}
+              maxLength={100}
             />
-            <Text style={styles.charCount}>{review.length} / 280</Text>
+            <Text style={styles.charCount}>{review.length} / 100</Text>
   
             {/* Confirm button */}
             <TouchableOpacity
@@ -179,7 +179,6 @@ import {
     songSection: {
       alignItems: "center",
       paddingHorizontal: 32,
-      paddingVertical: 16,
       gap: 6,
     },
     albumArt: {
@@ -194,11 +193,13 @@ import {
       color: "#1a1a1a",
       textAlign: "center",
       letterSpacing: -0.5,
+      fontFamily: "Anton"
     },
     artistName: {
       fontSize: 14,
-      color: "#888",
+      color: "#676767",
       textAlign: "center",
+      fontFamily: "Anton"
     },
     genreRow: {
       flexDirection: "row",
@@ -218,39 +219,37 @@ import {
       color: "#888",
       textTransform: "capitalize",
     },
-    sectionLabel: {
+    sectionLabel1: {
       fontSize: 14,
       fontWeight: "600",
-      color: "#1a1a1a",
+      color: "#676767",
       paddingHorizontal: 20,
-      marginTop: 24,
+      marginTop: -24,
       marginBottom: 12,
     },
+    sectionLabel2: {
+        fontSize: 14,
+        fontWeight: "600",
+        color: "#676767",
+        paddingHorizontal: 20,
+        marginTop: 20,
+        marginBottom: 12,
+      },
     vibeRow: {
       flexDirection: "row",
-      paddingHorizontal: 20,
+      paddingHorizontal: 15,
       gap: 10,
-    },
-    vibeButton: {
-      flex: 1,
-      alignItems: "center",
-      paddingVertical: 14,
-      borderRadius: 16,
-      gap: 6,
-      borderWidth: 2,
-      borderColor: "transparent",
     },
     vibeButtonSelected: {
       borderColor: "#1a1a1a22",
-    },
-    vibeEmoji: {
-      fontSize: 24,
     },
     vibeLabel: {
       fontSize: 12,
       fontWeight: "600",
       color: "#aaa",
       textAlign: "center",
+      flex: 1,
+      width: 50
     },
     textInput: {
       marginHorizontal: 20,
@@ -285,4 +284,24 @@ import {
       fontSize: 16,
       fontWeight: "700",
     },
+    vibeOption: {
+        flexDirection: "column",
+        alignItems: "center",
+        alignSelf: "center",
+        gap: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        borderRadius: 12,
+        borderWidth: 2,
+        marginRight: 8,
+        borderColor: "transparent",
+        backgroundColor: "#f9f9f9",
+      },
+      vibeIconBox: {
+        width: 34,
+        height: 34,
+        borderRadius: 8,
+        alignItems: "center",
+        justifyContent: "center",
+      },
   });
