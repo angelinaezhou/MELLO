@@ -4,8 +4,8 @@ import {
 } from "react-native";
 import { BlurView } from "expo-blur"
 import { useFocusEffect } from "expo-router";
-import { useUser } from "../context/userContext";
-import { getRankedSongs, type RankedSong } from "../utils/storage";
+import { useUser } from "./context/userContext";
+import { getRankedSongs, type RankedSong } from "./utils/storage";
 
 const UNLOCK_AT = 10;
 
@@ -44,7 +44,7 @@ function ScoreCircle({ score, vibe, locked }: { score: number; vibe: "loved" | "
         {
           color: "676767",
           fontFamily: "FjallaOne_400Regular",
-          opacity: 0.80,
+          opacity: 0.40,
           textShadowColor: "rgba(0, 0, 0, 0.8)",  // white border glow
           textShadowOffset: { width: 0.5, height: 0 },
           textShadowRadius: 4,
@@ -154,7 +154,7 @@ export default function Rankings() {
                 <View>
                   <Text style={styles.headerTitle}>my rankings</Text>
                   <Text style={styles.headerSubtitle}>
-                    {ranked.length} {ranked.length === 1 ? "song" : "songs"} ranked
+                    {ranked.length} {ranked.length === 1 ? "song" : "songs"} ranked and counting!
                   </Text>
                 </View>
               </View>

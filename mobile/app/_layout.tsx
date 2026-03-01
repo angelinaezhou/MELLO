@@ -33,7 +33,6 @@ export default function Layout() {
         }
       }}>
         <Tabs.Screen name="index" options={{ title: "Home", tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} /> }} />
-        <Tabs.Screen name="rankings" options={{ title: "My Rankings", tabBarIcon: ({ color, size }) => <Ionicons name="star" size={size} color={color} /> }} />
         <Tabs.Screen name="add" options={{ title: "Add", tabBarIcon: ({ color, size }) => <Ionicons name="musical-notes" size={size} color={color} /> }} />
         <Tabs.Screen name="recs" options={{ title: "Recs", tabBarIcon: ({ color, size }) => <Ionicons name="options" size={size} color={color} /> }} />
         <Tabs.Screen name="list" options={{ title: "Friends", tabBarIcon: ({ color, size }) => <Ionicons name="people" size={size} color={color} /> }} />
