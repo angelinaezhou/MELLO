@@ -3,7 +3,7 @@ const KEY = process.env.SUPERMEMORY_API_KEY!;
 
 export async function saveTasteProfile(userId: string, topTracks: any[]) {
   try {
-    await fetch(`${BASE}/documents`, {
+    const res = await fetch(`${BASE}/documents`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -17,13 +17,15 @@ export async function saveTasteProfile(userId: string, topTracks: any[]) {
             name: t.name,
             artist: t.artist,
             eloScore: t.eloScore,
-            audioFeatures: t.audioFeatures,
           })),
           updatedAt: new Date().toISOString(),
         }),
-        userId,
+        containerTag: userId,
+        customId: `taste-${userId}`,
       }),
     });
+    const data = await res.json();
+    console.log("SUPERMEMORY SAVE:", res.status, JSON.stringify(data));
   } catch (err) {
     console.error("Supermemory save failed:", err);
   }
@@ -31,18 +33,20 @@ export async function saveTasteProfile(userId: string, topTracks: any[]) {
 
 export async function getTasteProfile(userId: string) {
   try {
-    const res = await fetch(`${BASE}/documents?userId=${userId}&limit=1`, {
+    const res = await fetch(`${BASE}/documents/taste-${userId}`, {
       headers: {
         "Authorization": `Bearer ${KEY}`,
       },
     });
     console.log("SUPERMEMORY GET STATUS:", res.status);
+    if (!res.ok) return null;
+    
     const data = await res.json();
     console.log("SUPERMEMORY GET DATA:", JSON.stringify(data).slice(0, 300));
     
-    const doc = data?.documents?.[0] ?? data?.results?.[0] ?? data?.[0] ?? null;
-    if (!doc) return null;
-    return doc;
+    // data has content directly on it
+    if (!data?.content) return null;
+    return data;
   } catch (err) {
     console.error("Supermemory fetch failed:", err);
     return null;
