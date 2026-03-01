@@ -6,6 +6,7 @@ import {
 import { useSpotifyAuth } from "../hooks/useSpotifyAuth";
 import { getRankedSongs } from "../utils/storage";
 import { useUser } from "../context/userContext";
+import VinylSpinner from "../components/VinylSpinner";
 
 const BASE_URL = "https://mello-auth.vercel.app";
 
@@ -64,7 +65,7 @@ export default function Recs() {
 
   if (loading) return (
     <View style={styles.center}>
-      <ActivityIndicator size="large" color="#1db954" />
+      <VinylSpinner size={40} color="#1db954" />
       <Text style={styles.dimText}>Analyzing your taste...</Text>
     </View>
   );

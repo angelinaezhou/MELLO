@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
+import React from "react";
 import {
   View, Text, Image, StyleSheet,
-  FlatList, ActivityIndicator, TextInput, TouchableOpacity
+  FlatList, ActivityIndicator, TextInput, TouchableOpacity, Modal
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons"
 import * as SecureStore from "expo-secure-store";
@@ -13,13 +14,17 @@ import {
   addRankedSong, getRankedSongs, type QueuedSong, type RankedSong
 } from "../utils/storage";
 import { startingElo, matchupsNeeded, calcElo } from "../utils/elo";
+import VinylSpinner from "../components/VinylSpinner";
 
 type Vibe = "loved" | "okay" | "dislike";
 
 type HeadToHead = {
   newSong: RankedSong;
-  opponents: RankedSong[];
-  currentIndex: number;
+  candidates: RankedSong[];
+  candidateIndex: number;
+  completed: number;
+  totalNeeded: number;
+  seenOpponentIds: Set<string>;
 };
 
 export default function Add() {
@@ -37,6 +42,9 @@ export default function Add() {
   const [headToHead, setHeadToHead] = useState<HeadToHead | null>(null);
   const [h2hLeft, setH2hLeft] = useState<RankedSong | null>(null);
   const [h2hRight, setH2hRight] = useState<RankedSong | null>(null);
+  const [isFinalizing, setIsFinalizing] = useState(false);
+  const h2hLockedRef = useRef(false);
+
 
   useEffect(() => {
     async function init() {
@@ -140,65 +148,148 @@ export default function Add() {
       return;
     }
 
-    // Pick opponents — songs closest in ELO to the new song
-    const opponents = [...existing]
-      .sort((a, b) => Math.abs(a.eloScore - newSong.eloScore) - Math.abs(b.eloScore - newSong.eloScore))
-      .slice(0, needed);
+    const candidates = [...existing].sort(
+      (a, b) =>
+        Math.abs(a.eloScore - newSong.eloScore) - Math.abs(b.eloScore - newSong.eloScore)
+    );
 
-    setHeadToHead({ newSong, opponents, currentIndex: 0 });
+    // Pick opponents — songs closest in ELO to the new song
+    const firstOpponent = candidates[0];
+    setHeadToHead({
+      newSong,
+      candidates,
+      candidateIndex: 0,
+      completed: 0,
+      totalNeeded: needed,
+      seenOpponentIds: new Set(firstOpponent ? [firstOpponent.id] : []),
+    });
     setH2hLeft(newSong);
-    setH2hRight(opponents[0]);
+    setH2hRight(firstOpponent ?? null);
   };
 
   const handleH2HPick = async (winner: RankedSong, loser: RankedSong) => {
     if (!headToHead) return;
+  
+    if (h2hLockedRef.current) return;
+    h2hLockedRef.current = true;
+  
+    try {
+      const { newWinner, newLoser } = calcElo(winner.eloScore, loser.eloScore);
+  
+      const updatedNew =
+        winner.id === headToHead.newSong.id
+          ? { ...headToHead.newSong, eloScore: newWinner, matchups: headToHead.newSong.matchups + 1 }
+          : { ...headToHead.newSong, eloScore: newLoser, matchups: headToHead.newSong.matchups + 1 };
+  
+      const completedNext = headToHead.completed + 1;
+  
+      // ✅ finished required comparisons
+      if (completedNext >= headToHead.totalNeeded) {
+        setIsFinalizing(true);
+  
+        await addRankedSong(updatedNew);
+  
+        try {
+          const allRanked = await getRankedSongs();
+          const sorted = allRanked
+            .sort((a, b) => b.eloScore - a.eloScore)
+            .slice(0, 10)
+            .map(({ id, name, artist, eloScore }) => ({ id, name, artist, eloScore }));
+  
+          await fetch("https://mello-auth.vercel.app/api/memory/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: userId ?? "anonymous",
+              topTracks: sorted,
+            }),
+          });
+        } catch (err) {
+          console.log("Memory save skipped:", err);
+        }
+  
+        setAddedIds((prev) => new Set([...prev, updatedNew.id]));
+        setHeadToHead(null);
+        setH2hLeft(null);
+        setH2hRight(null);
+  
+        setIsFinalizing(false);
+        return;
+      }
+  
+      // ✅ otherwise: pick next opponent (advance candidateIndex)
+      const tempH2H: HeadToHead = {
+        ...headToHead,
+        newSong: updatedNew,
+        completed: completedNext,
+      };
+  
+      const next = getNextOpponent(tempH2H);
+  
+      if (!next) {
+        // rare: no more unseen opponents; fall back to allowing repeats or just keep current
+        // simplest: keep current opponent but let them pick again (not ideal)
+        setHeadToHead(tempH2H);
+        setH2hLeft(updatedNew);
+        return;
+      }
+  
+      const newSeen = new Set(tempH2H.seenOpponentIds);
+      newSeen.add(next.opponent.id);
+  
+      const updated = {
+        ...tempH2H,
+        candidateIndex: next.index,
+        seenOpponentIds: newSeen,
+      };
+  
+      setHeadToHead(updated);
+      setH2hLeft(updatedNew);
+      setH2hRight(next.opponent);
+    } finally {
+      h2hLockedRef.current = false;
+    }
+  };
 
-    const { newWinner, newLoser } = calcElo(winner.eloScore, loser.eloScore);
-    const updatedNew = winner.id === headToHead.newSong.id
-      ? { ...headToHead.newSong, eloScore: newWinner, matchups: headToHead.newSong.matchups + 1 }
-      : { ...headToHead.newSong, eloScore: newLoser, matchups: headToHead.newSong.matchups + 1 };
+  const getNextOpponent = (h2h: HeadToHead) => {
+    for (let i = h2h.candidateIndex + 1; i < h2h.candidates.length; i++) {
+      const cand = h2h.candidates[i];
+      if (!h2h.seenOpponentIds.has(cand.id)) {
+        return { opponent: cand, index: i };
+      }
+    }
+    return null; // no more unseen opponents
+  };
 
-    const nextIndex = headToHead.currentIndex + 1;
-
-    if (nextIndex >= headToHead.opponents.length) {
-  await addRankedSong(updatedNew);
-
-  // ⭐ Supermemory save (NEW)
-  try {
-    const allRanked = await getRankedSongs();
-    const sorted = allRanked
-  .sort((a, b) => b.eloScore - a.eloScore)
-  .slice(0, 10)
-  .map(({ id, name, artist, eloScore }) => ({ id, name, artist, eloScore }));
-
-    console.log("Saving memory for userId:", userId);
-await fetch("https://mello-auth.vercel.app/api/memory/save", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    userId: userId ?? "anonymous",
-    topTracks: sorted,
-  }),
-});  } catch (err) {
-    console.log("Memory save skipped:", err);
-  }
-
-  setAddedIds((prev) => new Set([...prev, updatedNew.id]));
-  setHeadToHead(null);
-  setH2hLeft(null);
-  setH2hRight(null);
-  return;
-}
-
-    // Next matchup
-    const updatedH2H = {
-      ...headToHead,
-      newSong: updatedNew,
-      currentIndex: nextIndex,
-    };
-    setHeadToHead(updatedH2H);
-    setH2hLeft(updatedNew);
-    setH2hRight(headToHead.opponents[nextIndex]);
+  const handleH2HSkip = () => {
+    if (!headToHead) return;
+    if (h2hLockedRef.current) return;
+    h2hLockedRef.current = true;
+  
+    try {
+      const next = getNextOpponent(headToHead);
+  
+      if (!next) {
+        // If they somehow saw everyone, you can either:
+        // (a) disable skip, or (b) allow repeats. I’d disable skip.
+        return;
+      }
+  
+      const newSeen = new Set(headToHead.seenOpponentIds);
+      newSeen.add(next.opponent.id);
+  
+      const updated = {
+        ...headToHead,
+        candidateIndex: next.index,
+        seenOpponentIds: newSeen,
+      };
+  
+      setHeadToHead(updated);
+      setH2hLeft(updated.newSong);
+      setH2hRight(next.opponent);
+    } finally {
+      h2hLockedRef.current = false;
+    }
   };
 
   const visibleTop50 = top50.filter((s) => !addedIds.has(s.id) && !bookmarkedIds.has(s.id));
@@ -206,15 +297,17 @@ await fetch("https://mello-auth.vercel.app/api/memory/save", {
 
   // Head-to-head screen
   if (headToHead && h2hLeft && h2hRight) {
-    const progress = headToHead.currentIndex / headToHead.opponents.length;
+    const total = headToHead.totalNeeded;
+    const shown = Math.min(headToHead.completed + 1, total); // shows “1/6” on first question
+    const progress = total === 0 ? 0 : headToHead.completed / total;
     return (
       <View style={styles.h2hContainer}>
         <Text style={styles.h2hTitle}>Which do you prefer?</Text>
         <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${progress * 100}%` as any }]} />
+          <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
         </View>
         <Text style={styles.dimText}>
-          {headToHead.currentIndex} / {headToHead.opponents.length}
+          {headToHead.completed} / {total}
         </Text>
 
         <View style={styles.cards}>
@@ -222,6 +315,7 @@ await fetch("https://mello-auth.vercel.app/api/memory/save", {
             style={styles.card}
             onPress={() => handleH2HPick(h2hLeft, h2hRight)}
             activeOpacity={0.8}
+            disabled={isFinalizing}
           >
             <Image source={{ uri: h2hLeft.albumArt }} style={styles.cardArt} />
             <Text style={styles.cardSong} numberOfLines={2}>{h2hLeft.name}</Text>
@@ -234,12 +328,30 @@ await fetch("https://mello-auth.vercel.app/api/memory/save", {
             style={styles.card}
             onPress={() => handleH2HPick(h2hRight, h2hLeft)}
             activeOpacity={0.8}
+            disabled={isFinalizing}
           >
             <Image source={{ uri: h2hRight.albumArt }} style={styles.cardArt} />
             <Text style={styles.cardSong} numberOfLines={2}>{h2hRight.name}</Text>
             <Text style={styles.cardArtist} numberOfLines={1}>{h2hRight.artist}</Text>
           </TouchableOpacity>
         </View>
+        <TouchableOpacity
+          onPress={handleH2HSkip}
+          disabled={isFinalizing}
+          style={styles.skipButton}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.skipText}>Skip this pair</Text>
+        </TouchableOpacity>
+        <Modal transparent visible={isFinalizing} animationType="fade">
+          <View style={styles.blockingOverlay}>
+            <View style={styles.blockingCard}>
+              <VinylSpinner size={40} color="#1db954" />
+              <Text style={styles.blockingTitle}>Saving your ranking…</Text>
+              <Text style={styles.blockingSubtitle}>hold on tight..</Text>
+            </View>
+          </View>
+        </Modal>
       </View>
     );
   }
@@ -346,6 +458,15 @@ await fetch("https://mello-auth.vercel.app/api/memory/save", {
         onClose={() => setModalVisible(false)}
         onConfirm={handleConfirm}
       />
+      <Modal transparent visible={isFinalizing} animationType="fade">
+        <View style={styles.blockingOverlay}>
+          <View style={styles.blockingCard}>
+            <ActivityIndicator size="large" color="#1db954" />
+            <Text style={styles.blockingTitle}>Saving your ranking…</Text>
+            <Text style={styles.blockingSubtitle}>Just a sec</Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -373,4 +494,45 @@ const styles = StyleSheet.create({
   cardSong:         { color: "#1a1a1a", fontSize: 14, fontWeight: "600", textAlign: "center", marginBottom: 4 },
   cardArtist:       { color: "#aaa", fontSize: 12, textAlign: "center" },
   vs:               { color: "#1db954", fontSize: 18, fontWeight: "800" },
+  blockingOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.25)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  blockingCard: {
+    width: "80%",
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    gap: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+  blockingTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1a1a1a",
+  },
+  blockingSubtitle: {
+    fontSize: 13,
+    color: "#888",
+  },
+  skipButton: {
+    marginTop: 18,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 999,
+    backgroundColor: "#f5f5f5",
+  },
+  skipText: {
+    color: "#888",
+    fontWeight: "700",
+    fontSize: 13,
+  },
 });

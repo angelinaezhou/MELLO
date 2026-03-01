@@ -201,7 +201,7 @@ export default function Home() {
                   <View style={styles.avatarPlaceholder} />
                 )}
                 <View>
-                  <Text style={styles.headerTitle}>my mello</Text>
+                  <Text style={styles.headerTitle}>my mello.</Text>
                   <Animated.Text style={[styles.headerSubtitle, { opacity: fadeAnim }]}>
                     {ranked.length} {ranked.length === 1 ? "song" : "songs"} ranked and counting!
                   </Animated.Text>
