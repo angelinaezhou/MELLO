@@ -8,7 +8,7 @@ import { getRankedSongs } from "../utils/storage";
 import { useUser } from "../context/userContext";
 
 const BASE_URL = "https://mello-auth.vercel.app";
-const { userImage, userId } = useUser();
+
 
 type Rec = {
   track: { id: string; name: string; artist: string; albumArt: string };
@@ -18,7 +18,7 @@ type Rec = {
 
 export default function Recs() {
   const { getValidToken } = useSpotifyAuth();
-  const { userImage } = useUser();
+  const { userImage, userId } = useUser();
   const [recs, setRecs] = useState<Rec[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,10 +36,10 @@ export default function Recs() {
           return;
         }
 
-        const topSongs = ranked
-          .sort((a, b) => b.eloScore - a.eloScore)
-          .slice(0, 10)
-          .map(s => ({ name: s.name, artist: s.artist }));
+       const topSongs = ranked
+        .sort((a, b) => b.eloScore - a.eloScore)
+        .slice(0, 10)
+        .map(s => ({ id: s.id, name: s.name, artist: s.artist }));
 
         const res = await fetch(`${BASE_URL}/api/openai/recommend`, {
           method: "POST",
@@ -100,6 +100,14 @@ export default function Recs() {
             <Text style={styles.recWhy} numberOfLines={2}>
               {rec.explanation ?? "Matches your taste profile."}
             </Text>
+            <View style={{ height: 3, backgroundColor: "#f0f0f0", borderRadius: 2, marginTop: 6 }}>
+              <View style={{
+                height: "100%",
+                width: `${Math.round(rec.score * 100)}%` as any,
+                backgroundColor: rec.score > 0.75 ? "#1db954" : rec.score > 0.65 ? "#FFB800" : "#aaa",
+                borderRadius: 2
+              }} />
+            </View>
           </View>
           <View style={styles.matchBadge}>
             <Text style={styles.matchPct}>{Math.round(rec.score * 100)}%</Text>

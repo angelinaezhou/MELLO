@@ -34,6 +34,14 @@ def recommend(data: dict):
     user_texts = [song_to_text(s) for s in top_songs]
     user_embeddings = model.encode(user_texts)
     user_vector = np.mean(user_embeddings, axis=0)
+    # Blend with historical taste from Supermemory
+    historical_songs = data.get("historicalSongs", [])
+    if historical_songs:
+        hist_texts = [song_to_text(s) for s in historical_songs[:5]]
+        hist_embeddings = model.encode(hist_texts)
+        hist_vector = np.mean(hist_embeddings, axis=0)
+    # 70% current taste, 30% historical
+        user_vector = 0.7 * user_vector + 0.3 * hist_vector
 
     # If friend songs provided, blend vectors
     if friend_songs:
@@ -55,13 +63,18 @@ def recommend(data: dict):
     for i, candidate in enumerate(candidate_songs):
         score = cosine_similarity(user_vector, candidate_embeddings[i])
         # Generate explanation based on score
-        if score > 0.85:
-            explanation = f"Strongly matches your taste in {top_songs[0]['artist']}-style music"
-        elif score > 0.75:
-            explanation = f"Similar energy and style to your top ranked songs"
+        similarities_to_user = [cosine_similarity(user_embeddings[j], candidate_embeddings[i]) for j in range(len(user_embeddings))]
+        most_similar_idx = int(np.argmax(similarities_to_user))
+        most_similar_song = top_songs[most_similar_idx]
+
+        if score > 0.75:
+            explanation = f"Matches the style of {most_similar_song['name']} by {most_similar_song['artist']}"
+        elif score > 0.70:
+            explanation = f"Similar energy to {most_similar_song['name']}"
+        elif score > 0.65:
+            explanation = f"Shares the vibe of {most_similar_song['artist']}'s sound"
         else:
-            explanation = f"Complements your overall music taste"
-        
+            explanation = f"Complements your taste in {most_similar_song['artist']}"
         scored.append({
             "id": candidate.get("id"),
             "name": candidate["name"],

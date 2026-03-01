@@ -4,7 +4,17 @@ const MODAL_URL = "https://kenjc2--mello-recommend-recommend.modal.run";
 
 export async function POST(req: Request) {
   const { topSongs, token, friendSongs, friendName } = await req.json();
-
+  // Fetch Supermemory historical profile
+let historicalSongs: any[] = [];
+if (userId) {
+  try {
+    const memRes = await fetch(`https://mello-auth.vercel.app/api/memory/profile?userId=${userId}`);
+    if (memRes.ok) {
+      const memData = await memRes.json();
+      historicalSongs = memData.topTracks ?? [];
+    }
+  } catch {}
+}
   try {
     // Fetch candidate songs from Spotify top 50
     const spotifyRes = await fetch(
@@ -34,7 +44,8 @@ export async function POST(req: Request) {
         candidateSongs: candidates,
         friendSongs: friendSongs ?? [],
         friendName: friendName ?? "your friend",
-      }),
+        historicalSongs,
+    }),
     });
 
     if (!modalRes.ok) {
