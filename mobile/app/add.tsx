@@ -166,7 +166,10 @@ export default function Add() {
   // ⭐ Supermemory save (NEW)
   try {
     const allRanked = await getRankedSongs();
-    const sorted = allRanked.sort((a, b) => b.eloScore - a.eloScore);
+    const sorted = allRanked
+  .sort((a, b) => b.eloScore - a.eloScore)
+  .slice(0, 10)
+  .map(({ id, name, artist, eloScore }) => ({ id, name, artist, eloScore }));
 
     console.log("Saving memory for userId:", userId);
 await fetch("https://mello-auth.vercel.app/api/memory/save", {
