@@ -12,6 +12,7 @@ const BASE_URL = "https://mello-auth.vercel.app";
 type Rec = {
   track: { id: string; name: string; artist: string; albumArt: string };
   score: number;
+  explanation?: string;
 };
 
 export default function Recs() {
@@ -23,80 +24,37 @@ export default function Recs() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function load() {
-      try {
-        const token = await getValidToken();
-        if (!token) { setError("Not logged in"); setLoading(false); return; }
-    
-        const ranked = await getRankedSongs();
-        if (ranked.length === 0) {
-          setError("Rank some songs first to get recommendations");
-          setLoading(false);
-          return;
-        }
-    
-        // Get top artist names from Spotify
-        const artistRes = await fetch(
-          "https://api.spotify.com/v1/me/top/artists?limit=5&time_range=medium_term",
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const artistData = await artistRes.json();
-        const topArtistNames: string[] = (artistData.items ?? [])
-          .map((a: any) => a.name)
-          .filter(Boolean)
-          .slice(0, 3);
-    
-        if (!topArtistNames.length) {
-          setError("Couldn't find your top artists");
-          setLoading(false);
-          return;
-        }
-    
-        // Search for tracks by top artists
-        const rankedIds = new Set(ranked.map((s) => s.id));
-        const seen = new Set<string>();
-        const trackResults: any[] = [];
-    
-        await Promise.all(
-          topArtistNames.map(async (artistName) => {
-            const res = await fetch(
-              `https://api.spotify.com/v1/search?q=artist:${encodeURIComponent(artistName)}&type=track&limit=10`,
-              { headers: { Authorization: `Bearer ${token}` } }
-            );
-            const data = await res.json();
-            console.log("SEARCH for", artistName, ":", JSON.stringify(data).slice(0, 200));
-            trackResults.push(...(data.tracks?.items ?? []));
-          })
-        );
-    
-        const recommendations: Rec[] = trackResults
-          .filter((t) => t && !seen.has(t.id) && seen.add(t.id))
-          .slice(0, 15)
-          .map((t) => ({
-            track: {
-              id: t.id,
-              name: t.name,
-              artist: t.artists[0]?.name ?? "Unknown",
-              albumArt: t.album.images[0]?.url ?? "",
-            },
-            score: Math.round((Math.random() * 15 + 85)) / 100,
-          }));
+async function load() {
+  try {
+    const token = await getValidToken();
+    if (!token) { setError("Not logged in"); setLoading(false); return; }
 
-        console.log("trackResults length:", trackResults.length);
-    
-        if (recommendations.length === 0) {
-          setError("Couldn't find recommendations — try ranking more songs");
-          setLoading(false);
-          return;
-        }
-    
-        setRecs(recommendations);
-      } catch (e: any) {
-        setError("Couldn't load recommendations.");
-      } finally {
-        setLoading(false);
-      }
+    const ranked = await getRankedSongs();
+    if (ranked.length === 0) {
+      setError("Rank some songs first to get recommendations");
+      setLoading(false);
+      return;
     }
+
+    const topSongs = ranked
+      .sort((a, b) => b.eloScore - a.eloScore)
+      .slice(0, 10)
+      .map(s => ({ name: s.name, artist: s.artist }));
+
+    const res = await fetch(`${BASE_URL}/api/openai/recommend`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topSongs, token }),
+    });
+
+    const data = await res.json();
+    setRecs(data.recommendations ?? []);
+  } catch (e: any) {
+    setError("Couldn't load recommendations.");
+  } finally {
+    setLoading(false);
+  }
+}
     load();
   }, []);
 
@@ -168,7 +126,7 @@ export default function Recs() {
             <Text style={styles.recName} numberOfLines={1}>{rec.track.name}</Text>
             <Text style={styles.recArtist} numberOfLines={1}>{rec.track.artist}</Text>
             <Text style={styles.recWhy} numberOfLines={2}>
-              {explanations[rec.track.id] ?? "Matches your taste profile."}
+              {(rec as any).explanation ?? "Matches your taste profile."}
             </Text>
           </View>
           <View style={styles.matchBadge}>
