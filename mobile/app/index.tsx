@@ -4,12 +4,13 @@ import {
 } from "react-native";
 import { BlurView } from "expo-blur";
 import { useFocusEffect, useNavigation } from "expo-router";
-import { FontAwesome } from "@expo/vector-icons";
+import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import * as SecureStore from "expo-secure-store";
 import * as Linking from "expo-linking";
 import { useUser } from "../context/userContext";
 import { getRankedSongs, type RankedSong } from "../utils/storage";
+import { Alert } from "react-native";
 
 const BASE_URL = "https://mello-auth.vercel.app";
 const APP_URL = "exp://10.4.151.47:8081";
@@ -136,11 +137,39 @@ export default function Home() {
     }
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      "Log out?",
+      "Are you sure you want to log out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Log out",
+          style: "destructive",
+          onPress: logout,
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
   if (!connected) {
     return (
       <View style={styles.hero}>
-        <Text style={styles.heroTitle}>mello</Text>
-        <Text style={styles.heroSubtitle}>rank and share your music taste</Text>
+        <View style={styles.logoRow}>
+          <Text style={styles.heroTitle}>mell</Text>
+          <Ionicons
+            name="play-skip-forward-circle"
+            size={32}
+            color="#86BF8E"
+            style={{ marginLeft: -2, marginTop: 8}}
+          />
+          <Text style={styles.heroTitle}>.</Text>
+        </View>
+        <Text style={styles.heroSubtitle}>rank and share your music taste!</Text>
         <TouchableOpacity style={styles.spotifyButton} onPress={handleLogin}>
           <FontAwesome name="spotify" size={20} color="#fff" />
           <Text style={styles.spotifyButtonText}>Connect Spotify</Text>
@@ -178,7 +207,7 @@ export default function Home() {
                   </Animated.Text>
                 </View>
               </View>
-              <TouchableOpacity onPress={logout}>
+              <TouchableOpacity onPress={handleLogout}>
                 <Text style={styles.logoutText}>Log out</Text>
               </TouchableOpacity>
             </View>
@@ -230,7 +259,7 @@ const styles = StyleSheet.create({
     gap: 16,
     paddingHorizontal: 32,
   },
-  heroTitle:    { fontSize: 48, fontWeight: "700", color: "#1a1a1a", letterSpacing: -1 },
+  heroTitle:    { fontSize: 48, fontWeight: "700", color: "#86BF8E", letterSpacing: -1 },
   heroSubtitle: { fontSize: 15, color: "#aaa" },
   spotifyButton: {
     flexDirection: "row",
@@ -271,9 +300,9 @@ const styles = StyleSheet.create({
   unlockContainer: { marginHorizontal: 20, marginTop: 16, marginBottom: 4, gap: 8 },
   unlockRow:       { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   unlockLabel:     { fontSize: 13, color: "#aaa" },
-  unlockCount:     { fontSize: 13, fontWeight: "700", color: "#1db954" },
+  unlockCount:     { fontSize: 13, fontWeight: "700", color: "#86BF8E" },
   unlockTrack:     { height: 4, backgroundColor: "#f0f0f0", borderRadius: 2 },
-  unlockFill:      { height: "100%" as any, backgroundColor: "#1db954", borderRadius: 2 },
+  unlockFill:      { height: "100%" as any, backgroundColor: "#86BF8E", borderRadius: 2 },
   unlockBanner: {
     position: "absolute",
     top: 100,
@@ -327,7 +356,7 @@ const styles = StyleSheet.create({
   },
   scoreBig:  { fontSize: 108, fontWeight: "800", color: "#1a1a1a", textAlign: "center", fontFamily: "FjallaOne_400Regular", marginLeft: -1 },
   lockEmoji: { fontSize: 20 },
-  albumArt:  { width: 120, height: 120, marginLeft: -120, zIndex: 0, borderRadius: 15 },
+  albumArt:  { width: 120, height: 120, marginLeft: -115, zIndex: 0, borderRadius: 15 },
   info: {
     flex: 1,
     paddingHorizontal: 14,
@@ -351,5 +380,9 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.25)",
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
+  },
+  logoRow: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 });
