@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 const MODAL_URL = "https://kenjc2--mello-recommend-recommend.modal.run";
 
 export async function POST(req: Request) {
-  const { topSongs, token, friendSongs, friendName } = await req.json();
+  const { topSongs, token, friendSongs, friendName, userId } = await req.json();
   // Fetch Supermemory historical profile
 let historicalSongs: any[] = [];
 if (userId) {
