@@ -71,7 +71,7 @@ export default function Rankings() {
       <FlatList
         style={{ flex: 1, backgroundColor: "#fff" }}
         data={ranked}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => `${item.id}-${index}`}
         contentContainerStyle={{ paddingBottom: 40 }}
         ListHeaderComponent={
           <View>
