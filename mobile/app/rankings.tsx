@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import {
   View, Text, Image, FlatList, StyleSheet, Animated
 } from "react-native";
+import { BlurView } from "expo-blur"
 import { useFocusEffect } from "expo-router";
 import { useUser } from "../context/userContext";
 import { getRankedSongs, type RankedSong } from "../utils/storage";
@@ -9,22 +10,26 @@ import { getRankedSongs, type RankedSong } from "../utils/storage";
 const UNLOCK_AT = 10;
 
 function ScoreCircle({ score, vibe, locked }: { score: number; vibe: "loved" | "okay" | "dislike"; locked: boolean }) {
-  const color =
+  const textColor =
     vibe === "loved" ? "#b7f5c4" :
     vibe === "okay" ? "#fef08a" :
     "#fecaca";
 
   if (locked) {
     return (
-      <View style={[styles.scoreCircle, { backgroundColor: "#f5f5f5" }]}>
-        <Text style={styles.lockEmoji}>🔒</Text>
+      <View style={styles.scoreLocked}>
+        <Text style={styles.lockEmoji}>?</Text>
       </View>
     );
   }
 
   return (
-    <View style={[styles.scoreCircle, { backgroundColor: color }]}>
-      <Text style={styles.scoreText}>{score.toFixed(1)}</Text>
+    <View style={[styles.scoreBlock]}>
+      {/* Glass overlay */}
+      <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFill} />
+      {/* Frosted shine */}
+      <View style={[styles.glassShine, {zIndex: 4, borderColor: "#000000"}]} />
+      <Text style={[styles.scoreBig, { color: textColor, zIndex: 5, fontFamily: "FjallaOne_400Regular"}]}>{score.toFixed(0)}</Text>
     </View>
   );
 }
@@ -112,40 +117,25 @@ export default function Rankings() {
           </View>
         }
         renderItem={({ item, index }) => (
-          <View style={styles.row}>
-            <Text style={[
-              styles.rank,
-              index === 0 && { color: "#FFB800" },
-              index === 1 && { color: "#aaa" },
-              index === 2 && { color: "#cd7f32" },
-            ]}>
-              #{index + 1}
-            </Text>
-
+          <View style={styles.card}>
+            {/* Big score on left */}
+            <ScoreCircle
+              score={item.normalizedScore}
+              vibe={item.vibe}
+              locked={!scoresUnlocked}
+            />
+        
+            {/* Album art overlapping */}
             <Image source={{ uri: item.albumArt }} style={styles.albumArt} />
-
+        
+            {/* Text block */}
             <View style={styles.info}>
               <Text style={styles.songName} numberOfLines={1}>{item.name}</Text>
               <Text style={styles.artistName} numberOfLines={1}>{item.artist}</Text>
               {item.review ? (
                 <Text style={styles.review} numberOfLines={2}>{item.review}</Text>
               ) : null}
-              {item.genres?.length > 0 && (
-                <View style={styles.genreRow}>
-                  {item.genres.slice(0, 2).map((g) => (
-                    <View key={g} style={styles.genreTag}>
-                      <Text style={styles.genreText}>{g}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
             </View>
-
-            <ScoreCircle
-              score={item.normalizedScore}
-              vibe={item.vibe}
-              locked={!scoresUnlocked}
-            />
           </View>
         )}
       />
@@ -154,6 +144,7 @@ export default function Rankings() {
 }
 
 const styles = StyleSheet.create({
+  // Header
   header: {
     paddingTop: 60,
     paddingBottom: 20,
@@ -173,21 +164,14 @@ const styles = StyleSheet.create({
   avatarPlaceholder: { width: 44, height: 44, borderRadius: 22, backgroundColor: "#eee" },
   headerTitle:       { fontSize: 22, fontWeight: "700", color: "#1a1a1a", letterSpacing: -0.5 },
   headerSubtitle:    { fontSize: 13, color: "#888", marginTop: 1 },
-  unlockContainer: {
-    marginHorizontal: 20,
-    marginTop: 16,
-    marginBottom: 4,
-    gap: 8,
-  },
-  unlockRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  unlockLabel:  { fontSize: 13, color: "#aaa" },
-  unlockCount:  { fontSize: 13, fontWeight: "700", color: "#1db954" },
-  unlockTrack:  { height: 4, backgroundColor: "#f0f0f0", borderRadius: 2 },
-  unlockFill:   { height: "100%", backgroundColor: "#1db954", borderRadius: 2 },
+
+  // Unlock progress
+  unlockContainer: { marginHorizontal: 20, marginTop: 16, marginBottom: 4, gap: 8 },
+  unlockRow:       { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  unlockLabel:     { fontSize: 13, color: "#aaa" },
+  unlockCount:     { fontSize: 13, fontWeight: "700", color: "#1db954" },
+  unlockTrack:     { height: 4, backgroundColor: "#f0f0f0", borderRadius: 2 },
+  unlockFill:      { height: "100%" as any, backgroundColor: "#1db954", borderRadius: 2 },
   unlockBanner: {
     position: "absolute",
     top: 100,
@@ -198,21 +182,68 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 30,
   },
-  unlockText:   { color: "#fff", fontWeight: "700", fontSize: 15 },
-  empty:        { alignItems: "center", justifyContent: "center", paddingTop: 120, gap: 8, paddingHorizontal: 40 },
-  emptyTitle:   { fontSize: 18, fontWeight: "700", color: "#1a1a1a" },
-  emptySubtitle:{ fontSize: 14, color: "#aaa", textAlign: "center" },
-  row:          { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: "#f5f5f5", gap: 12 },
-  rank:         { fontSize: 13, fontWeight: "700", color: "#1db954", width: 32 },
-  albumArt:     { width: 52, height: 52, borderRadius: 8 },
-  info:         { flex: 1, gap: 3 },
-  songName:     { fontSize: 15, fontWeight: "600", color: "#1a1a1a" },
-  artistName:   { fontSize: 13, color: "#888" },
-  review:       { fontSize: 12, color: "#aaa", fontStyle: "italic", marginTop: 2 },
-  genreRow:     { flexDirection: "row", gap: 6, marginTop: 4 },
-  genreTag:     { backgroundColor: "#f5f5f5", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
-  genreText:    { fontSize: 11, color: "#aaa", textTransform: "capitalize" },
-  scoreCircle:  { width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center" },
-  lockEmoji:    { fontSize: 18 },
-  scoreText:    { fontSize: 13, fontWeight: "700", color: "#1a1a1a" },
+  unlockText: { color: "#fff", fontWeight: "700", fontSize: 15 },
+
+  // Empty state
+  empty:         { alignItems: "center", justifyContent: "center", paddingTop: 120, gap: 8, paddingHorizontal: 40 },
+  emptyTitle:    { fontSize: 18, fontWeight: "700", color: "#1a1a1a" },
+  emptySubtitle: { fontSize: 14, color: "#aaa", textAlign: "center" },
+
+  // Card
+  card: {
+    width: 367,
+    height: 156,
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "center",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    marginVertical: 6,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    overflow: "hidden",
+  },
+  scoreBlock: {
+    width: 200,
+    height: "100%" as any,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scoreLocked: {
+    width: 114,
+    height: "100%" as any,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f5f5f5",
+  },
+  scoreBig:  { fontSize: 108, fontWeight: "800", color: "#1a1a1a", textAlign: "center", fontFamily: "FjallaOne_400Regular", marginLeft: -1},
+  lockEmoji: { fontSize: 20 },
+  albumArt:  { width: 120, height: 120, marginLeft: -100, zIndex: 0},
+  info: {
+    flex: 1,
+    paddingHorizontal: 14,
+    gap: 4,
+    justifyContent: "center",
+    zIndex: 0,
+    borderBlockColor: "888"
+  },
+  songName:   { fontSize: 15, fontWeight: "700", color: "#1a1a1a" },
+  artistName: { fontSize: 13, color: "#888" },
+  review:     { fontSize: 12, color: "#aaa", fontStyle: "italic", marginTop: 2 },
+  genreRow:   { flexDirection: "row", gap: 6, marginTop: 4 },
+  genreTag:   { backgroundColor: "#f5f5f5", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
+  genreText:  { fontSize: 11, color: "#aaa", textTransform: "capitalize" },
+  glassShine: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: "50%",
+    backgroundColor: "rgba(255,255,255,0.25)",
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+  },
 });
