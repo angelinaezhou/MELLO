@@ -8,6 +8,7 @@ import { getRankedSongs } from "../utils/storage";
 import { useUser } from "../context/userContext";
 
 const BASE_URL = "https://mello-auth.vercel.app";
+const { userImage, userId } = useUser();
 
 type Rec = {
   track: { id: string; name: string; artist: string; albumArt: string };
@@ -19,75 +20,47 @@ export default function Recs() {
   const { getValidToken } = useSpotifyAuth();
   const { userImage } = useUser();
   const [recs, setRecs] = useState<Rec[]>([]);
-  const [explanations, setExplanations] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-async function load() {
-  try {
-    const token = await getValidToken();
-    if (!token) { setError("Not logged in"); setLoading(false); return; }
+    async function load() {
+      try {
+        const token = await getValidToken();
+        if (!token) { setError("Not logged in"); setLoading(false); return; }
 
-    const ranked = await getRankedSongs();
-    if (ranked.length === 0) {
-      setError("Rank some songs first to get recommendations");
-      setLoading(false);
-      return;
+        const ranked = await getRankedSongs();
+        if (ranked.length === 0) {
+          setError("Rank some songs first to get recommendations");
+          setLoading(false);
+          return;
+        }
+
+        const topSongs = ranked
+          .sort((a, b) => b.eloScore - a.eloScore)
+          .slice(0, 10)
+          .map(s => ({ name: s.name, artist: s.artist }));
+
+        const res = await fetch(`${BASE_URL}/api/openai/recommend`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ topSongs, token, userId }),
+        });
+
+        console.log("STATUS:", res.status);
+        const text = await res.text();
+        console.log("RAW RESPONSE:", text);
+        const data = JSON.parse(text);
+        setRecs(data.recommendations ?? []);
+      } catch (e: any) {
+        console.log("ERROR:", e.message);
+        setError("Couldn't load recommendations.");
+      } finally {
+        setLoading(false);
+      }
     }
-
-    const topSongs = ranked
-      .sort((a, b) => b.eloScore - a.eloScore)
-      .slice(0, 10)
-      .map(s => ({ name: s.name, artist: s.artist }));
-
-    const res = await fetch(`${BASE_URL}/api/openai/recommend`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topSongs, token }),
-    });
-
-    const data = await res.json();
-    console.log("RECS DATA:", JSON.stringify(data.recommendations?.[0]));
-    setRecs(data.recommendations ?? []);
-  } catch (e: any) {
-    setError("Couldn't load recommendations.");
-  } finally {
-    setLoading(false);
-  }
-}
     load();
   }, []);
-
-  // Fetch AI explanations for top 5 recs
-  useEffect(() => {
-    if (recs.length === 0) return;
-    async function fetchExplanations() {
-      const ranked = await getRankedSongs();
-      const topSong = ranked.sort((a, b) => b.normalizedScore - a.normalizedScore)[0];
-      const results: Record<string, string> = {};
-      await Promise.all(
-        recs.slice(0, 5).map(async (rec) => {
-          try {
-            const res = await fetch(`${BASE_URL}/api/openai/explain`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                seed: { name: topSong?.name ?? "your taste", artist: topSong?.artist ?? "" },
-                rec: { name: rec.track.name, artist: rec.track.artist },
-              }),
-            });
-            const data = await res.json();
-            results[rec.track.id] = data.explanation;
-          } catch {
-            results[rec.track.id] = "Matches your taste profile.";
-          }
-        })
-      );
-      setExplanations(results);
-    }
-    fetchExplanations();
-  }, [recs]);
 
   if (loading) return (
     <View style={styles.center}>
@@ -104,7 +77,6 @@ async function load() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           {userImage ? (
@@ -119,7 +91,6 @@ async function load() {
         </View>
       </View>
 
-      {/* Rec cards */}
       {recs.map((rec) => (
         <View key={rec.track.id} style={styles.recCard}>
           <Image source={{ uri: rec.track.albumArt }} style={styles.recArt} />
@@ -127,7 +98,7 @@ async function load() {
             <Text style={styles.recName} numberOfLines={1}>{rec.track.name}</Text>
             <Text style={styles.recArtist} numberOfLines={1}>{rec.track.artist}</Text>
             <Text style={styles.recWhy} numberOfLines={2}>
-              {(rec as any).explanation ?? "Matches your taste profile."}
+              {rec.explanation ?? "Matches your taste profile."}
             </Text>
           </View>
           <View style={styles.matchBadge}>
