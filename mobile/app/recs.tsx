@@ -48,6 +48,7 @@ async function load() {
     });
 
     const data = await res.json();
+    console.log("RECS DATA:", JSON.stringify(data.recommendations?.[0]));
     setRecs(data.recommendations ?? []);
   } catch (e: any) {
     setError("Couldn't load recommendations.");
