@@ -10,9 +10,11 @@ export async function GET(req: Request) {
   if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
   try {
-    const parsed = JSON.parse(profile.content ?? profile);
-    return NextResponse.json({ topTracks: parsed.topTracks ?? [] });
+    const content = typeof profile.content === "string" 
+      ? JSON.parse(profile.content) 
+      : profile.content;
+    return NextResponse.json({ topTracks: content.topTracks ?? [] });
   } catch {
-    return NextResponse.json({ error: "Invalid profile" }, { status: 500 });
+    return NextResponse.json({ error: "Invalid profile", raw: profile }, { status: 500 });
   }
 }
