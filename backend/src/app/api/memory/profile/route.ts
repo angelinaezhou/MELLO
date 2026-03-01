@@ -7,6 +7,7 @@ export async function GET(req: Request) {
   if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
 
   const profile = await getTasteProfile(userId);
+  console.log("PROFILE RESULT:", JSON.stringify(profile).slice(0, 300));
   if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
   try {
