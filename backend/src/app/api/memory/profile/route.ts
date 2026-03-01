@@ -7,15 +7,19 @@ export async function GET(req: Request) {
   if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
 
   const profile = await getTasteProfile(userId);
-  console.log("PROFILE RESULT:", JSON.stringify(profile).slice(0, 300));
   if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
   try {
-    const content = typeof profile.content === "string" 
-      ? JSON.parse(profile.content) 
-      : profile.content;
-    return NextResponse.json({ topTracks: content.topTracks ?? [] });
-  } catch {
-    return NextResponse.json({ error: "Invalid profile", raw: profile }, { status: 500 });
+    const raw = typeof profile.content === "string" ? profile.content : JSON.stringify(profile.content);
+    
+    // Content may have multiple JSON objects separated by ---
+    // Take the LAST one (most recent)
+    const parts = raw.split("---").map((p: string) => p.trim()).filter(Boolean);
+    const lastPart = parts[parts.length - 1];
+    const parsed = JSON.parse(lastPart);
+    
+    return NextResponse.json({ topTracks: parsed.topTracks ?? [] });
+  } catch (e: any) {
+    return NextResponse.json({ error: "Invalid profile", detail: e.message }, { status: 500 });
   }
 }
