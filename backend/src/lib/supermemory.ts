@@ -3,6 +3,12 @@ const KEY = process.env.SUPERMEMORY_API_KEY!;
 
 export async function saveTasteProfile(userId: string, topTracks: any[]) {
   try {
+    // Delete existing doc first (upsert pattern)
+    await fetch(`${BASE}/documents/taste-${userId}`, {
+      method: "DELETE",
+      headers: { "Authorization": `Bearer ${KEY}` },
+    });
+
     const res = await fetch(`${BASE}/documents`, {
       method: "POST",
       headers: {
@@ -34,19 +40,16 @@ export async function saveTasteProfile(userId: string, topTracks: any[]) {
 export async function getTasteProfile(userId: string) {
   try {
     const res = await fetch(`${BASE}/documents/taste-${userId}`, {
-      headers: {
-        "Authorization": `Bearer ${KEY}`,
-      },
+      headers: { "Authorization": `Bearer ${KEY}` },
     });
-    console.log("SUPERMEMORY GET STATUS:", res.status);
     if (!res.ok) return null;
     
     const data = await res.json();
-    console.log("SUPERMEMORY GET DATA:", JSON.stringify(data).slice(0, 300));
-    
-    // data has content directly on it
     if (!data?.content) return null;
-    return data;
+    
+    // content is a JSON string, parse it
+    const parsed = JSON.parse(data.content);
+    return parsed; // { type, topTracks, updatedAt }
   } catch (err) {
     console.error("Supermemory fetch failed:", err);
     return null;

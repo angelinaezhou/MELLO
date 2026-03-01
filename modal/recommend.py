@@ -40,7 +40,7 @@ def recommend(data: dict):
         hist_texts = [song_to_text(s) for s in historical_songs[:5]]
         hist_embeddings = model.encode(hist_texts)
         hist_vector = np.mean(hist_embeddings, axis=0)
-    # 70% current taste, 30% historical
+        # 70% current taste, 30% historical
         user_vector = 0.7 * user_vector + 0.3 * hist_vector
 
     # If friend songs provided, blend vectors
