@@ -6,54 +6,71 @@ export async function POST(req: Request) {
   if (!rankedIds?.length) return Response.json({ error: "No ranked IDs" }, { status: 400 });
 
   try {
-    // 1️⃣ Validate seed tracks with Spotify
-    const resCheck = await fetch(
-      `https://api.spotify.com/v1/tracks?ids=${rankedIds.join(",")}`,
+    // 1. Get track details to find artist IDs
+    const tracksRes = await fetch(
+      `https://api.spotify.com/v1/tracks?ids=${rankedIds.slice(0, 5).join(",")}`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
+    const tracksData = await tracksRes.json();
+    const artistIds = [...new Set(
+      (tracksData.tracks ?? [])
+        .filter((t: any) => t)
+        .map((t: any) => t.artists[0]?.id)
+        .filter(Boolean)
+    )].slice(0, 3) as string[];
 
-    if (!resCheck.ok) {
-      const errText = await resCheck.text();
-      console.error("Spotify track validation failed:", resCheck.status, errText);
-      return Response.json(
-        { error: `Spotify track check failed: ${resCheck.status} ${errText}` },
-        { status: 500 }
-      );
-    }
+    if (!artistIds.length) return Response.json({ error: "No valid artists" }, { status: 400 });
 
-    const trackData = await resCheck.json();
-    const validIds = (trackData.tracks ?? [])
-      .filter((t: any) => t) // remove nulls/unavailable tracks
-      .map((t: any) => t.id);
-
-    if (!validIds.length) return Response.json({ error: "No valid seed tracks", status: 400 });
-
-    const seedTracks = validIds.slice(0, 5).join(",");
-
-    // 2️⃣ Request recommendations
-    const res = await fetch(
-      `https://api.spotify.com/v1/recommendations?seed_tracks=${seedTracks}&limit=10`,
-      { headers: { Authorization: `Bearer ${token}` } }
+    // 2. Get related artists for each seed artist
+    const relatedArtistIds: string[] = [];
+    await Promise.all(
+      artistIds.map(async (artistId) => {
+        const res = await fetch(
+          `https://api.spotify.com/v1/artists/${artistId}/related-artists`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const data = await res.json();
+        const ids = (data.artists ?? []).slice(0, 3).map((a: any) => a.id);
+        relatedArtistIds.push(...ids);
+      })
     );
 
-    if (!res.ok) {
-      const err = await res.text();
-      console.error("Spotify recommendations failed:", res.status, err);
-      return Response.json({ error: `Spotify recs failed: ${res.status} ${err}` }, { status: 500 });
-    }
+    // Dedupe and exclude original artists
+    const uniqueRelated = [...new Set(relatedArtistIds)]
+      .filter((id) => !artistIds.includes(id))
+      .slice(0, 6);
 
-    const data = await res.json();
+    if (!uniqueRelated.length) return Response.json({ error: "No related artists found" }, { status: 400 });
 
-    // 3️⃣ Map to your format
-    const recommendations = (data.tracks ?? []).map((t: any) => ({
-      track: {
-        id: t.id,
-        name: t.name,
-        artist: t.artists[0]?.name ?? "Unknown",
-        albumArt: t.album.images[0]?.url ?? "",
-      },
-      score: Math.random() * 0.15 + 0.85, // 85–100% match
-    }));
+    // 3. Get top tracks from related artists
+    const trackResults: any[] = [];
+    await Promise.all(
+      uniqueRelated.map(async (artistId) => {
+        const res = await fetch(
+          `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const data = await res.json();
+        const tracks = (data.tracks ?? []).slice(0, 2);
+        trackResults.push(...tracks);
+      })
+    );
+
+    // 4. Dedupe, shuffle, exclude already ranked songs
+    const rankedSet = new Set(rankedIds);
+    const seen = new Set<string>();
+    const recommendations = trackResults
+      .filter((t) => t && !rankedSet.has(t.id) && !seen.has(t.id) && seen.add(t.id))
+      .slice(0, 15)
+      .map((t) => ({
+        track: {
+          id: t.id,
+          name: t.name,
+          artist: t.artists[0]?.name ?? "Unknown",
+          albumArt: t.album.images[0]?.url ?? "",
+        },
+        score: Math.round((Math.random() * 15 + 85)) / 100,
+      }));
 
     return Response.json({ recommendations });
   } catch (e: any) {
