@@ -2,8 +2,9 @@ import { useEffect, useState, useRef } from "react";
 import React from "react";
 import {
   View, Text, Image, StyleSheet,
-  FlatList, ActivityIndicator, TextInput, TouchableOpacity, Modal
+  FlatList, ActivityIndicator, TextInput, TouchableOpacity, Modal, 
 } from "react-native";
+import { useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons"
 import * as SecureStore from "expo-secure-store";
 import { useUser } from "../context/userContext";
@@ -44,6 +45,8 @@ export default function Add() {
   const [h2hRight, setH2hRight] = useState<RankedSong | null>(null);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const h2hLockedRef = useRef(false);
+  const flatListRef = useRef<FlatList>(null);
+  const navigation = useNavigation();
   const [searchError, setSearchError] = useState<string | null>(null);
 
 
@@ -145,6 +148,13 @@ export default function Add() {
       clearTimeout(timeout);
     };
   }, [searchQuery, bookmarkedIds]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("tabPress" as any, () => {
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const handleBookmark = async (song: QueuedSong) => {
     const updated = await toggleBookmark(song);
@@ -423,6 +433,7 @@ export default function Add() {
   return (
     <View style={{flex: 1}}>
       <FlatList
+        ref = {flatListRef}
         data={sections}
         keyExtractor={(_, i) => String(i)}
         style={{ flex: 1, backgroundColor: "#fff" }}
@@ -486,7 +497,7 @@ export default function Add() {
           if (item.type === "searching") {
             return (
               <View style={styles.center}>
-                <ActivityIndicator color="#1db954" />
+                <VinylSpinner size={30} color="#1db954" />
               </View>
             );
           }

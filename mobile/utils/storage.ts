@@ -65,6 +65,15 @@ export async function updateRankedSong(updated: RankedSong): Promise<RankedSong[
   return renormalized;
 }
 
+export async function removeRankedSong(id: string): Promise<void> {
+  const existing = await getRankedSongs();
+  const updated = existing.filter((s) => s.id !== id);
+  const { normalizeScores } = await import("./elo");
+  const normalized = normalizeScores(updated);
+  const renormalized = updated.map((s, i) => ({ ...s, normalizedScore: normalized[i] }));
+  await saveRankedSongs(renormalized);
+}
+
 // ── Bookmarks ─────────────────────────────────────────────
 
 export async function getBookmarks(): Promise<QueuedSong[]> {

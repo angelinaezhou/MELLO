@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
-  View, Text, Image, FlatList, StyleSheet, Animated, TouchableOpacity
+  View, Text, Image, FlatList, StyleSheet, Animated, TouchableOpacity, PixelRatio
 } from "react-native";
 import { BlurView } from "expo-blur";
 import { useFocusEffect, useNavigation } from "expo-router";
@@ -11,6 +11,8 @@ import * as Linking from "expo-linking";
 import { useUser } from "../context/userContext";
 import { getRankedSongs, type RankedSong } from "../utils/storage";
 import { Alert } from "react-native";
+import SongDetails from "../components/SongDetails";
+import { removeRankedSong } from "../utils/storage";
 
 const BASE_URL = "https://mello-auth.vercel.app";
 const APP_URL = "exp://10.4.151.47:8081";
@@ -21,6 +23,7 @@ function ScoreCircle({ score, vibe, locked }: { score: number; vibe: "loved" | "
     vibe === "loved" ? "#86BF8E" :
     vibe === "okay" ? "#D9C36A" :
     "#D09175";
+  const pd = PixelRatio.get();
 
   if (locked) {
     return (
@@ -31,10 +34,10 @@ function ScoreCircle({ score, vibe, locked }: { score: number; vibe: "loved" | "
           fontFamily: "FjallaOne_400Regular",
           position: "absolute",
           opacity: 0.30,
-          transform: [{ scaleX: 1.02 }, { scaleY: 1.02 }],
+          transform: [{ scaleX: 1 + (0.02 / pd) }, { scaleY: 1 + (0.02 / pd) }],
           textShadowColor: textColor,
-          textShadowOffset: { width: 0, height: 3 },
-          textShadowRadius: 5,
+          textShadowOffset: { width: 0, height: 3 / pd },
+          textShadowRadius: 5 / pd,
           zIndex: 5,
         }]}>0</Text>
         <Text style={[styles.scoreBig, {
@@ -42,8 +45,8 @@ function ScoreCircle({ score, vibe, locked }: { score: number; vibe: "loved" | "
           fontFamily: "FjallaOne_400Regular",
           opacity: 0.40,
           textShadowColor: "rgba(0, 0, 0, 0.8)",
-          textShadowOffset: { width: 0.5, height: 0 },
-          textShadowRadius: 4,
+          textShadowOffset: { width: 0.5 / pd, height: 0 },
+          textShadowRadius: 4 / pd,
           zIndex: 6,
         }]}>0</Text>
       </View>
@@ -58,19 +61,19 @@ function ScoreCircle({ score, vibe, locked }: { score: number; vibe: "loved" | "
         fontFamily: "FjallaOne_400Regular",
         position: "absolute",
         opacity: 0.30,
-        transform: [{ scaleX: 1.02 }, { scaleY: 1.02 }],
+        transform: [{ scaleX: 1 + (0.02 / pd) }, { scaleY: 1 + (0.02 / pd) }],
         textShadowColor: textColor,
-        textShadowOffset: { width: 0, height: 3 },
-        textShadowRadius: 5,
+        textShadowOffset: { width: 0, height: 3 / pd },
+        textShadowRadius: 5 / pd,
         zIndex: 5,
       }]}>{score.toFixed(0)}</Text>
       <Text style={[styles.scoreBig, {
         color: textColor,
         fontFamily: "FjallaOne_400Regular",
-        opacity: 0.80,
+        opacity: 0.8,
         textShadowColor: "rgba(0, 0, 0, 0.8)",
-        textShadowOffset: { width: 0.5, height: 0 },
-        textShadowRadius: 4,
+        textShadowOffset: { width: 0.5 / pd, height: 0 },
+        textShadowRadius: 4 / pd,
         zIndex: 6,
       }]}>{score.toFixed(0)}</Text>
     </View>
@@ -85,6 +88,16 @@ export default function Home() {
   const [justUnlocked, setJustUnlocked] = useState(false);
   const unlockAnim = useState(new Animated.Value(0))[0];
   const scoresUnlocked = ranked.length >= UNLOCK_AT;
+  const flatListRef = useRef<FlatList>(null);
+  const [selectedSong, setSelectedSong] = useState<RankedSong | null>(null);
+  const [detailVisible, setDetailVisible] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("tabPress" as any, () => {
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -156,6 +169,22 @@ export default function Home() {
     );
   };
 
+  const handleDelete = (song: RankedSong) => {
+    Alert.alert("Remove rating?", `Remove "${song.name}" from your rankings?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: async () => {
+          // import removeRankedSong from your storage utils
+          await removeRankedSong(song.id);
+          setDetailVisible(false);
+          setRanked((prev) => prev.filter((s) => s.id !== song.id));
+        },
+      },
+    ]);
+  };
+
   if (!connected) {
     return (
       <View style={styles.hero}>
@@ -180,13 +209,8 @@ export default function Home() {
 
   return (
     <View style={{ flex: 1 }}>
-      {justUnlocked && (
-        <Animated.View style={[styles.unlockBanner, { opacity: unlockAnim }]}>
-          <Text style={styles.unlockText}>🎉 Scores unlocked!</Text>
-        </Animated.View>
-      )}
-
       <FlatList
+        ref = {flatListRef}
         style={{ flex: 1, backgroundColor: "#fff" }}
         data={ranked}
         keyExtractor={(item, index) => `${item.id}-${index}`}
@@ -232,19 +256,31 @@ export default function Home() {
           </View>
         }
         renderItem={({ item }) => (
-          <View style={styles.card}>
-            <ScoreCircle score={item.normalizedScore} vibe={item.vibe} locked={!scoresUnlocked} />
-            <Image source={{ uri: item.albumArt }} style={styles.albumArt} />
-            <View style={styles.info}>
-              <Text style={[styles.songName, { fontFamily: "Anton" }]}>{item.name}</Text>
-              <Text style={[styles.artistName, { fontFamily: "Anton" }]}>{item.artist}</Text>
-              {item.review ? (
-                <Text style={styles.review} numberOfLines={3}>"{item.review}"</Text>
-              ) : null}
+          <TouchableOpacity 
+            activeOpacity={0.8} 
+            onPress={() => {
+              setSelectedSong(item); setDetailVisible(true);
+          }}>
+            <View style={styles.card}>
+              <ScoreCircle score={item.normalizedScore} vibe={item.vibe} locked={!scoresUnlocked} />
+              <Image source={{ uri: item.albumArt }} style={styles.albumArt} />
+              <View style={styles.info}>
+                <Text style={[styles.songName, { fontFamily: "Anton" }]}>{item.name}</Text>
+                <Text style={[styles.artistName, { fontFamily: "Anton" }]}>{item.artist}</Text>
+                {item.review ? (
+                  <Text style={styles.review} numberOfLines={3}>"{item.review}"</Text>
+                ) : null}
+              </View>
             </View>
-          </View>
+          </TouchableOpacity>
         )}
       />
+      <SongDetails
+      song={selectedSong}
+      visible={detailVisible}
+      onClose={() => setDetailVisible(false)}
+      onDelete={handleDelete}
+    />
     </View>
   );
 }
@@ -371,18 +407,5 @@ const styles = StyleSheet.create({
   genreRow:   { flexDirection: "row", gap: 6, marginTop: 4 },
   genreTag:   { backgroundColor: "#f5f5f5", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
   genreText:  { fontSize: 11, color: "#aaa", textTransform: "capitalize" },
-  glassShine: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: "50%",
-    backgroundColor: "rgba(255,255,255,0.25)",
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-  },
-  logoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
+  logoRow:    { flexDirection: "row", alignItems: "center" }
 });
