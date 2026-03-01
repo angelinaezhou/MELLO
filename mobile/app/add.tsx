@@ -23,7 +23,7 @@ type HeadToHead = {
 };
 
 export default function Add() {
-  const { userImage } = useUser();
+  const { userImage, userId } = useUser();
   const [top50, setTop50] = useState<QueuedSong[]>([]);
   const [bookmarks, setBookmarks] = useState<QueuedSong[]>([]);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
@@ -161,14 +161,30 @@ export default function Add() {
     const nextIndex = headToHead.currentIndex + 1;
 
     if (nextIndex >= headToHead.opponents.length) {
-      // Done with head-to-head, save
-      await addRankedSong(updatedNew);
-      setAddedIds((prev) => new Set([...prev, updatedNew.id]));
-      setHeadToHead(null);
-      setH2hLeft(null);
-      setH2hRight(null);
-      return;
-    }
+  await addRankedSong(updatedNew);
+
+  // ⭐ Supermemory save (NEW)
+  try {
+    const allRanked = await getRankedSongs();
+    const sorted = allRanked.sort((a, b) => b.eloScore - a.eloScore);
+
+await fetch("https://mello-auth.vercel.app/api/memory/save", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    userId: userId ?? "anonymous",
+    topTracks: sorted,
+  }),
+});  } catch (err) {
+    console.log("Memory save skipped:", err);
+  }
+
+  setAddedIds((prev) => new Set([...prev, updatedNew.id]));
+  setHeadToHead(null);
+  setH2hLeft(null);
+  setH2hRight(null);
+  return;
+}
 
     // Next matchup
     const updatedH2H = {

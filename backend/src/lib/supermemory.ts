@@ -3,7 +3,7 @@ const KEY = process.env.SUPERMEMORY_API_KEY!;
 
 export async function saveTasteProfile(userId: string, topTracks: any[]) {
   try {
-    await fetch(`${BASE}/memories`, {
+    await fetch(`${BASE}/documents`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -12,6 +12,7 @@
     "typescript": "~5.9.2"
   },
   "dependencies": {
-    "expo": "^55.0.4"
+    "expo": "^55.0.4",
+    "supermemory": "^4.15.0"
   }
 }
