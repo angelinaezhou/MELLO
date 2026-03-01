@@ -264,11 +264,18 @@ export default function Add() {
         return;
       }
   
-      // ✅ otherwise: pick next opponent (advance candidateIndex)
+      // re-sort after each matchup instead of initial group
       const tempH2H: HeadToHead = {
         ...headToHead,
         newSong: updatedNew,
         completed: completedNext,
+        // re-sort candidates by closeness to updated ELO each round
+        candidates: [...headToHead.candidates].sort(
+          (a, b) =>
+            Math.abs(a.eloScore - updatedNew.eloScore) -
+            Math.abs(b.eloScore - updatedNew.eloScore)
+        ),
+        candidateIndex: -1, // reset so getNextOpponent starts from 0
       };
   
       const next = getNextOpponent(tempH2H);
@@ -305,7 +312,7 @@ export default function Add() {
         return { opponent: cand, index: i };
       }
     }
-    return null; // no more unseen opponents
+    return null;
   };
 
   const handleH2HSkip = () => {
