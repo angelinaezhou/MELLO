@@ -31,13 +31,18 @@ export async function saveTasteProfile(userId: string, topTracks: any[]) {
 
 export async function getTasteProfile(userId: string) {
   try {
-    const res = await fetch(`${BASE}/memories/search?q=music+taste+profile&userId=${userId}&limit=1`, {
+    const res = await fetch(`${BASE}/documents?userId=${userId}&limit=1`, {
       headers: {
         "Authorization": `Bearer ${KEY}`,
       },
     });
+    console.log("SUPERMEMORY GET STATUS:", res.status);
     const data = await res.json();
-    return data?.results?.[0] ?? null;
+    console.log("SUPERMEMORY GET DATA:", JSON.stringify(data).slice(0, 300));
+    
+    const doc = data?.documents?.[0] ?? data?.results?.[0] ?? data?.[0] ?? null;
+    if (!doc) return null;
+    return doc;
   } catch (err) {
     console.error("Supermemory fetch failed:", err);
     return null;
