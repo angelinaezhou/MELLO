@@ -42,7 +42,7 @@ export default function Friends() {
     load();
   }, []);
 
-  const myCode = userId?.slice(0, 8).toUpperCase() ?? "...";
+  const myCode = userId ?? "...";
 
   const handleAddFriend = async () => {
     if (!friendCode.trim()) return;
