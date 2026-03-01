@@ -67,8 +67,23 @@ export default function Home() {
 
         <View style={styles.content}>
           <Text style={{ color: "#aaa" }}>your music, ranked.</Text>
+  
+          <TouchableOpacity
+            style={{ marginTop: 40 }}
+            onPress={async () => {
+              const { saveRankedSongs } = await import("../utils/storage");
+              await saveRankedSongs([]);
+              await SecureStore.deleteItemAsync("added_song_ids");
+              await SecureStore.deleteItemAsync("bookmarked_songs");
+              await SecureStore.deleteItemAsync("elo_scores");
+              alert("All data cleared!");
+            }}
+          >
+            <Text style={{ color: "#ff4444", fontSize: 13 }}>Clear all data</Text>
+          </TouchableOpacity>
         </View>
       </View>
+      
     );
   }
 

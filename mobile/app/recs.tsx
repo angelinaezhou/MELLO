@@ -24,6 +24,7 @@ export default function Recs() {
     async function load() {
       try {
         const token = await getValidToken();
+        console.log("TOKEN:", token);
         if (!token) { setError("Not logged in"); setLoading(false); return; }
 
         const ranked = await getRankedSongs();
@@ -32,12 +33,13 @@ export default function Recs() {
           setLoading(false);
           return;
         }
+        
 
         const rankedIds = ranked
           .sort((a, b) => b.eloScore - a.eloScore)
           .slice(0, 10)
-          .map(s => s.id);
-
+          .map(s => s.id);       
+          
         const res = await fetch(`${BASE_URL}/api/spotify/recommend-taste`, {
           method: "POST",
           headers: {
@@ -46,8 +48,10 @@ export default function Recs() {
           },
           body: JSON.stringify({ rankedIds }),
         });
-
+        
+        console.log("RES STATUS:", res.status);
         const data = await res.json();
+        console.log("DATA:", JSON.stringify(data));
         setRecs(data.recommendations ?? []);
       } catch (e: any) {
         setError("Couldn't load recommendations.");
