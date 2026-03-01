@@ -168,6 +168,7 @@ export default function Add() {
     const allRanked = await getRankedSongs();
     const sorted = allRanked.sort((a, b) => b.eloScore - a.eloScore);
 
+    console.log("Saving memory for userId:", userId);
 await fetch("https://mello-auth.vercel.app/api/memory/save", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
