@@ -44,6 +44,7 @@ export default function Add() {
   const [h2hRight, setH2hRight] = useState<RankedSong | null>(null);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const h2hLockedRef = useRef(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -86,33 +87,64 @@ export default function Add() {
       setSearchResults([]);
       return;
     }
+  
+    let cancelled = false;
+  
     const timeout = setTimeout(async () => {
       setSearching(true);
+  
       try {
         const token = await SecureStore.getItemAsync("access_token");
-        if (!token) return;
-        const res = await fetch(
-          `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=track&limit=20`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        if (!token) {
+          console.log("No access token found");
+          return;
+        }
+  
+        const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery.trim())}&type=track&limit=10`;
+
+        setSearchError(null);
+  
+        const res = await fetch(url, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        console.log("Token:", token?.slice(0, 20));
+        console.log("Response status:", res.status);
+
+  
+        // 🔥 IMPORTANT: don’t silently ignore bad statuses
+        if (!res.ok) {
+          const text = await res.text();
+          setSearchError(`Spotify error ${res.status}: ${text.slice(0, 120)}`);
+          setSearchResults([]);
+          return;
+        }
+  
         const data = await res.json();
+  
         const results: QueuedSong[] = (data.tracks?.items ?? []).map((t: any) => ({
           id: t.id,
           name: t.name,
           artist: t.artists.map((a: any) => a.name).join(", "),
           artistId: t.artists[0]?.id ?? "",
-          albumArt: t.album.images[0]?.url ?? "",
+          albumArt: t.album.images?.[0]?.url ?? "",
           bookmarked: bookmarkedIds.has(t.id),
         }));
-        setSearchResults(results);
-      } catch {
-        setSearchResults([]);
+  
+        if (!cancelled) setSearchResults(results);
+      } catch (e) {
+        console.log("Search threw error:", e);
+        if (!cancelled) setSearchResults([]);
       } finally {
-        setSearching(false);
+        if (!cancelled) setSearching(false);
       }
     }, 400);
-    return () => clearTimeout(timeout);
-  }, [searchQuery]);
+  
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
+  }, [searchQuery, bookmarkedIds]);
 
   const handleBookmark = async (song: QueuedSong) => {
     const updated = await toggleBookmark(song);
@@ -366,11 +398,16 @@ export default function Add() {
     { type: "search" },
     ...(searchQuery.trim()
       ? [
-          { type: "sectionLabel", label: "Search results" },
-          ...(searching
-            ? [{ type: "searching" }]
-            : searchResults.map((s) => ({ type: "song", song: s, source: "search" }))),
-        ]
+        { type: "sectionLabel", label: "Search results" },
+
+        ...(searchError
+          ? [{ type: "searchError", message: searchError }]
+          : []),
+
+        ...(searching
+          ? [{ type: "searching" }]
+          : searchResults.map((s) => ({ type: "song", song: s, source: "search" }))),
+      ]
       : [
           ...(visibleBookmarks.length > 0
             ? [
@@ -391,6 +428,18 @@ export default function Add() {
         style={{ flex: 1, backgroundColor: "#fff" }}
         keyboardShouldPersistTaps="handled"
         renderItem={({ item }: { item: any }) => {
+          if (item.type === "searchError") {
+            return (
+              <Text style={{
+                color: "#d00",
+                fontSize: 12,
+                paddingHorizontal: 20,
+                paddingVertical: 8,
+              }}>
+                {item.message}
+              </Text>
+            );
+          }
           if (item.type === "header") {
             return (
               <View style={styles.header}>
