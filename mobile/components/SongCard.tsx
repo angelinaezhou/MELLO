@@ -22,8 +22,8 @@ export default function SongCard({ song, index, onBookmark, onPress, bookmarked 
       <Image source={{ uri: song.albumArt }} style={styles.albumArt} />
 
       <View style={styles.info}>
-        <Text style={styles.songName} numberOfLines={1}>{song.name}</Text>
-        <Text style={styles.artistName} numberOfLines={1}>{song.artist}</Text>
+        <Text style={styles.songName}>{song.name}</Text>
+        <Text style={styles.artistName}>{song.artist}</Text>
       </View>
 
       <TouchableOpacity
@@ -34,7 +34,7 @@ export default function SongCard({ song, index, onBookmark, onPress, bookmarked 
         <Ionicons
           name={bookmarked ? "bookmark" : "bookmark-outline"}
           size={20}
-          color={bookmarked ? "#1db954" : "#ccc"}
+          color={bookmarked ? "#86BF8E" : "#ccc"}
         />
       </TouchableOpacity>
     </TouchableOpacity>
@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 16,
     gap: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#f9f9f9",
@@ -62,20 +62,22 @@ const styles = StyleSheet.create({
   albumArt: {
     width: 48,
     height: 48,
-    borderRadius: 6,
+    borderRadius: 10,
   },
   info: {
     flex: 1,
   },
   songName: {
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: "600",
     color: "#1a1a1a",
+    fontFamily: "Anton"
   },
   artistName: {
     fontSize: 13,
     color: "#888",
     marginTop: 2,
+    fontFamily: "Anton"
   },
   bookmarkButton: {
     padding: 4,

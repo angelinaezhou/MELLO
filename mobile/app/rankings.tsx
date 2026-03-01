@@ -11,25 +11,89 @@ const UNLOCK_AT = 10;
 
 function ScoreCircle({ score, vibe, locked }: { score: number; vibe: "loved" | "okay" | "dislike"; locked: boolean }) {
   const textColor =
-    vibe === "loved" ? "#b7f5c4" :
-    vibe === "okay" ? "#fef08a" :
-    "#fecaca";
+    vibe === "loved" ? "#86BF8E" :
+    vibe === "okay" ? "#D9C36A" :
+    "#D09175";
 
   if (locked) {
     return (
-      <View style={styles.scoreLocked}>
-        <Text style={styles.lockEmoji}>?</Text>
-      </View>
+      <View style={[styles.scoreBlock]}>
+      {/* Glass overlay */}
+      <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFill} />
+      {/* Ghost layer for depth */}
+      <Text style={[
+        styles.scoreBig,
+        {
+          color: textColor,
+          fontFamily: "FjallaOne_400Regular",
+          position: "absolute",
+          opacity: 0.30,
+          transform: [{ scaleX: 1.02 }, { scaleY: 1.02 }],
+          textShadowColor: textColor,
+          textShadowOffset: { width: 0, height: 3 },
+          textShadowRadius: 5,
+          zIndex: 5,
+        }
+      ]}>
+        0
+      </Text>
+
+      {/* Main text */}
+      <Text style={[
+        styles.scoreBig,
+        {
+          color: "676767",
+          fontFamily: "FjallaOne_400Regular",
+          opacity: 0.80,
+          textShadowColor: "rgba(0, 0, 0, 0.8)",  // white border glow
+          textShadowOffset: { width: 0.5, height: 0 },
+          textShadowRadius: 4,
+          zIndex: 6,
+        }
+      ]}>
+        0
+      </Text>
+    </View>
     );
   }
 
   return (
     <View style={[styles.scoreBlock]}>
       {/* Glass overlay */}
-      <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFill} />
-      {/* Frosted shine */}
-      <View style={[styles.glassShine, {zIndex: 4, borderColor: "#000000"}]} />
-      <Text style={[styles.scoreBig, { color: textColor, zIndex: 5, fontFamily: "FjallaOne_400Regular"}]}>{score.toFixed(0)}</Text>
+      <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFill} />
+      {/* Ghost layer for depth */}
+      <Text style={[
+        styles.scoreBig,
+        {
+          color: textColor,
+          fontFamily: "FjallaOne_400Regular",
+          position: "absolute",
+          opacity: 0.30,
+          transform: [{ scaleX: 1.02 }, { scaleY: 1.02 }],
+          textShadowColor: textColor,
+          textShadowOffset: { width: 0, height: 3 },
+          textShadowRadius: 5,
+          zIndex: 5,
+        }
+      ]}>
+        {score.toFixed(0)}
+      </Text>
+
+      {/* Main text */}
+      <Text style={[
+        styles.scoreBig,
+        {
+          color: textColor,
+          fontFamily: "FjallaOne_400Regular",
+          opacity: 0.80,
+          textShadowColor: "rgba(0, 0, 0, 0.8)",  // white border glow
+          textShadowOffset: { width: 0.5, height: 0 },
+          textShadowRadius: 4,
+          zIndex: 6,
+        }
+      ]}>
+        {score.toFixed(0)}
+      </Text>
     </View>
   );
 }
@@ -130,10 +194,10 @@ export default function Rankings() {
         
             {/* Text block */}
             <View style={styles.info}>
-              <Text style={styles.songName} numberOfLines={1}>{item.name}</Text>
-              <Text style={styles.artistName} numberOfLines={1}>{item.artist}</Text>
+              <Text style={[styles.songName, {fontFamily: "Anton"}]} >{item.name}</Text>
+              <Text style={[styles.artistName, {fontFamily: "Anton"}]}>{item.artist}</Text>
               {item.review ? (
-                <Text style={styles.review} numberOfLines={2}>{item.review}</Text>
+                <Text style={styles.review} numberOfLines={3}>"{item.review}"</Text>
               ) : null}
             </View>
           </View>
@@ -198,6 +262,8 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     backgroundColor: "#fff",
     borderRadius: 16,
+    borderColor: "#fff",
+    borderWidth: 2,
     marginVertical: 6,
     shadowColor: "#000",
     shadowOpacity: 0.06,
@@ -205,11 +271,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
     overflow: "hidden",
+    marginBottom: 16
   },
   scoreBlock: {
-    width: 200,
+    width: 175,
     height: "100%" as any,
-    alignItems: "center",
+    alignItems: "flex-start",
+    marginLeft: 15,
     justifyContent: "center",
   },
   scoreLocked: {
@@ -221,14 +289,15 @@ const styles = StyleSheet.create({
   },
   scoreBig:  { fontSize: 108, fontWeight: "800", color: "#1a1a1a", textAlign: "center", fontFamily: "FjallaOne_400Regular", marginLeft: -1},
   lockEmoji: { fontSize: 20 },
-  albumArt:  { width: 120, height: 120, marginLeft: -100, zIndex: 0},
+  albumArt:  { width: 120, height: 120, marginLeft: -120, zIndex: 0, borderRadius: 15},
   info: {
     flex: 1,
     paddingHorizontal: 14,
     gap: 4,
     justifyContent: "center",
     zIndex: 0,
-    borderBlockColor: "888"
+    borderBlockColor: "888", 
+    fontFamily: "Anton"
   },
   songName:   { fontSize: 15, fontWeight: "700", color: "#1a1a1a" },
   artistName: { fontSize: 13, color: "#888" },

@@ -100,7 +100,7 @@ import {
             </View>
   
             {/* Vibe selector */}
-            <Text style={styles.sectionLabel}>How was it?</Text>
+            <Text style={styles.sectionLabel}>Thoughts?</Text>
             <View style={styles.vibeRow}>
               {VIBE_OPTIONS.map((option) => {
                 const selected = vibe === option.value;
@@ -125,10 +125,10 @@ import {
             </View>
   
             {/* Review text */}
-            <Text style={styles.sectionLabel}>Your thoughts</Text>
+            <Text style={styles.sectionLabel}>Tell us more! This can affect your song score too.</Text>
             <TextInput
               style={styles.textInput}
-              placeholder="What do you think about this song..."
+              placeholder="..."
               placeholderTextColor="#ccc"
               value={review}
               onChangeText={setReview}

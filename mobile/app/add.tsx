@@ -201,7 +201,7 @@ await fetch("https://mello-auth.vercel.app/api/memory/save", {
     setH2hRight(headToHead.opponents[nextIndex]);
   };
 
-  const visibleTop50 = top50.filter((s) => !addedIds.has(s.id));
+  const visibleTop50 = top50.filter((s) => !addedIds.has(s.id) && !bookmarkedIds.has(s.id));
   const visibleBookmarks = bookmarks.filter((s) => !addedIds.has(s.id));
 
   // Head-to-head screen
@@ -257,12 +257,12 @@ await fetch("https://mello-auth.vercel.app/api/memory/save", {
       : [
           ...(visibleBookmarks.length > 0
             ? [
-                { type: "sectionLabel", label: "Bookmarked" },
+                { type: "sectionLabel", label: "BOOKMARKS" },
                 ...visibleBookmarks.map((s) => ({ type: "song", song: s, source: "bookmark" })),
               ]
             : []),
-          { type: "sectionLabel", label: "Your top 50" },
-          ...visibleTop50.map((s, i) => ({ type: "song", song: s, index: i, source: "top50" })),
+          { type: "sectionLabel", label: "YOUR TOP SPOTIFY SONGS" },
+          ...visibleTop50.map((s, i) => ({ type: "song", song: s, source: "top50" })),
         ]),
   ];
 
@@ -285,7 +285,7 @@ await fetch("https://mello-auth.vercel.app/api/memory/save", {
                   )}
                   <View>
                     <Text style={styles.headerTitle}>add songs</Text>
-                    <Text style={styles.headerSubtitle}>tap a song to rank it</Text>
+                    <Text style={styles.headerSubtitle}>find new tracks to rank!</Text>
                   </View>
                 </View>
               </View>
@@ -329,7 +329,6 @@ await fetch("https://mello-auth.vercel.app/api/memory/save", {
             return (
               <SongCard
                 song={item.song}
-                index={item.source === "top50" ? item.index : undefined}
                 bookmarked={bookmarkedIds.has(item.song.id)}
                 onBookmark={handleBookmark}
                 onPress={handleSongPress}
@@ -356,7 +355,7 @@ const styles = StyleSheet.create({
   headerLeft:       { flexDirection: "row", alignItems: "center", gap: 12 },
   avatar:           { width: 44, height: 44, borderRadius: 22 },
   avatarPlaceholder:{ width: 44, height: 44, borderRadius: 22, backgroundColor: "#eee" },
-  headerTitle:      { fontSize: 22, fontWeight: "700", color: "#1a1a1a", letterSpacing: -0.5 },
+  headerTitle:      { fontSize: 24, fontWeight: "700", color: "#1a1a1a", letterSpacing: -0.5 },
   headerSubtitle:   { fontSize: 13, color: "#888", marginTop: 1 },
   searchContainer:  { flexDirection: "row", alignItems: "center", margin: 16, backgroundColor: "#f5f5f5", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
   searchIcon:       {},

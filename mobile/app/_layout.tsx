@@ -2,12 +2,14 @@ import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { UserProvider } from "../context/userContext";
 import { useFonts, FjallaOne_400Regular } from "@expo-google-fonts/fjalla-one";
+import { Anton_400Regular } from "@expo-google-fonts/anton"
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 
 export default function Layout() {
   const [fontsLoaded] = useFonts({
     FjallaOne_400Regular,
+    Anton_400Regular,
   });
 
   useEffect(() => {
