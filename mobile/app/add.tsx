@@ -232,7 +232,8 @@ export default function Add() {
       if (completedNext >= headToHead.totalNeeded) {
         setIsFinalizing(true);
   
-        await addRankedSong(updatedNew);
+        const renormalized = await addRankedSong(updatedNew);
+        const savedSong = renormalized.find((s) => s.id === updatedNew.id);
   
         try {
           const allRanked = await getRankedSongs();
@@ -252,7 +253,7 @@ export default function Add() {
         } catch (err) {
           console.log("Memory save skipped:", err);
         }
-        setResultSong(updatedNew);
+        setResultSong(savedSong ?? updatedNew);
         setResultVisible(true);
   
         setAddedIds((prev) => new Set([...prev, updatedNew.id]));

@@ -9,10 +9,9 @@ import * as WebBrowser from "expo-web-browser";
 import * as SecureStore from "expo-secure-store";
 import * as Linking from "expo-linking";
 import { useUser } from "../context/userContext";
-import { getRankedSongs, type RankedSong } from "../utils/storage";
 import { Alert } from "react-native";
 import SongDetails from "../components/SongDetails";
-import { removeRankedSong } from "../utils/storage";
+import { getRankedSongs, getAddedIds, removeRankedSong, saveRankedSongs, type RankedSong } from "../utils/storage";
 
 const BASE_URL = "https://mello-auth.vercel.app";
 const APP_URL = "exp://10.4.151.47:8081";
@@ -91,6 +90,7 @@ export default function Home() {
   const flatListRef = useRef<FlatList>(null);
   const [selectedSong, setSelectedSong] = useState<RankedSong | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);
+  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("tabPress" as any, () => {
@@ -176,13 +176,37 @@ export default function Home() {
         text: "Remove",
         style: "destructive",
         onPress: async () => {
-          // import removeRankedSong from your storage utils
           await removeRankedSong(song.id);
+          // add these two lines ↓
+          const current = await getAddedIds();
+          current.delete(song.id);
+          await SecureStore.setItemAsync("added_song_ids", JSON.stringify([...current]));
+          // ↑ end
           setDetailVisible(false);
           setRanked((prev) => prev.filter((s) => s.id !== song.id));
         },
       },
     ]);
+  };
+
+  const handleDeleteAll = () => {
+    Alert.alert(
+      "Delete all rankings?",
+      "This will permanently remove all your ranked songs. This can't be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete all",
+          style: "destructive",
+          onPress: async () => {
+            await saveRankedSongs([]);
+            await SecureStore.setItemAsync("added_song_ids", JSON.stringify([]));
+            setRanked([]);
+            setAddedIds(new Set()); // ← clear this too so songs reappear
+          },
+        },
+      ]
+    );
   };
 
   if (!connected) {
@@ -274,6 +298,14 @@ export default function Home() {
             </View>
           </TouchableOpacity>
         )}
+        ListFooterComponent={
+          ranked.length > 0 ? (
+            <TouchableOpacity style={styles.deleteAllBtn} onPress={handleDeleteAll} activeOpacity={0.8}>
+              <Ionicons name="trash-outline" size={14} color="#D09175" />
+              <Text style={styles.deleteAllText}>Delete all rankings</Text>
+            </TouchableOpacity>
+          ) : null
+        }
       />
       <SongDetails
       song={selectedSong}
@@ -407,5 +439,24 @@ const styles = StyleSheet.create({
   genreRow:   { flexDirection: "row", gap: 6, marginTop: 4 },
   genreTag:   { backgroundColor: "#f5f5f5", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
   genreText:  { fontSize: 11, color: "#aaa", textTransform: "capitalize" },
-  logoRow:    { flexDirection: "row", alignItems: "center" }
+  logoRow:    { flexDirection: "row", alignItems: "center" }, 
+  deleteAllBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginHorizontal: 24,
+    marginTop: 8,
+    marginBottom: 32,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: "#D09175" + "44",
+    backgroundColor: "#D09175" + "0a",
+  },
+  deleteAllText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#D09175",
+  },
 });
