@@ -39,15 +39,14 @@ export async function getTasteProfile(userId: string) {
       },
     });
     console.log("SUPERMEMORY GET STATUS:", res.status);
+    if (!res.ok) return null;
+    
     const data = await res.json();
     console.log("SUPERMEMORY GET DATA:", JSON.stringify(data).slice(0, 300));
     
-    if (!res.ok) return null;
-    
-    const content = data?.content ?? data?.document?.content ?? null;
-    if (!content) return null;
-    
-    return { content };
+    // data has content directly on it
+    if (!data?.content) return null;
+    return data;
   } catch (err) {
     console.error("Supermemory fetch failed:", err);
     return null;
