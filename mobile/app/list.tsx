@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   sectionLabel:      { fontSize: 12, fontWeight: "700", color: "#aaa", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 12 },
   inputRow:          { flexDirection: "row", gap: 10 },
   input:             { flex: 1, backgroundColor: "#f5f5f5", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: "#1a1a1a" },
-  addButton:         { backgroundColor: "#1db954", borderRadius: 12, paddingHorizontal: 20, justifyContent: "center" },
+  addButton:         { backgroundColor: "#1db954", borderRadius: 20, paddingHorizontal: 20, justifyContent: "center" },
   addButtonText:     { color: "#fff", fontWeight: "700", fontSize: 15 },
   errorText:         { color: "#ff4444", fontSize: 13, marginTop: 8 },
   friendsSection:    { paddingHorizontal: 20, marginBottom: 24 },

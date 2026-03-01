@@ -48,6 +48,8 @@ export default function Add() {
   const flatListRef = useRef<FlatList>(null);
   const navigation = useNavigation();
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [resultSong, setResultSong] = useState<RankedSong | null>(null);
+  const [resultVisible, setResultVisible] = useState(false);
 
 
   useEffect(() => {
@@ -250,6 +252,8 @@ export default function Add() {
         } catch (err) {
           console.log("Memory save skipped:", err);
         }
+        setResultSong(updatedNew);
+        setResultVisible(true);
   
         setAddedIds((prev) => new Set([...prev, updatedNew.id]));
         setHeadToHead(null);
@@ -532,9 +536,32 @@ export default function Add() {
           </View>
         </View>
       </Modal>
+      <Modal transparent visible={resultVisible} animationType="fade">
+        <View style={styles.resultOverlay}>
+          <View style={styles.resultCard}>
+            <Image source={{ uri: resultSong?.albumArt }} style={styles.resultArt} />
+            <Text style={styles.resultName} numberOfLines={2}>{resultSong?.name}</Text>
+            <Text style={styles.resultArtist}>{resultSong?.artist}</Text>
+            <View style={[styles.resultScorePill, { borderColor: resultSong?.vibe ? VIBE_COLOR[resultSong.vibe] : "#aaa" }]}>
+              <Text style={[styles.resultScore, { color: resultSong?.vibe ? VIBE_COLOR[resultSong.vibe] : "#aaa" }]}>
+                {resultSong?.normalizedScore.toFixed(0)}
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.resultBtn} onPress={() => setResultVisible(false)}>
+              <Text style={styles.resultBtnText}>nice!</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
+
+const VIBE_COLOR: Record<string, string> = {
+  loved: "#86BF8E",
+  okay: "#D9C36A",
+  dislike: "#D09175",
+};
 
 const styles = StyleSheet.create({
   header:           { paddingTop: 60, paddingBottom: 20, paddingHorizontal: 20, backgroundColor: "#fff", flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderBottomColor: "#f0f0f0", shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
@@ -608,5 +635,68 @@ const styles = StyleSheet.create({
     color: "#888",
     fontWeight: "700",
     fontSize: 13,
-  }
+  },
+  resultOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  resultCard: {
+    width: "78%",
+    backgroundColor: "#fff",
+    borderRadius: 24,
+    paddingVertical: 28,
+    paddingHorizontal: 24,
+    alignItems: "center",
+    gap: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
+  resultArt: {
+    width: 120,
+    height: 120,
+    borderRadius: 14,
+    marginBottom: 8,
+  },
+  resultName: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1a1a1a",
+    textAlign: "center",
+    fontFamily: "Anton",
+    letterSpacing: -0.5,
+  },
+  resultArtist: {
+    fontSize: 13,
+    color: "#888",
+    fontFamily: "Anton",
+  },
+  resultScorePill: {
+    marginTop: 8,
+    borderWidth: 2,
+    borderRadius: 999,
+    paddingHorizontal: 20,
+    paddingVertical: 6,
+  },
+  resultScore: {
+    fontSize: 22,
+    fontWeight: "800",
+    fontFamily: "FjallaOne_400Regular",
+  },
+  resultBtn: {
+    marginTop: 12,
+    backgroundColor: "#1a1a1a",
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 999,
+  },
+  resultBtnText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 15,
+  },
 });
